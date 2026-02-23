@@ -1,26 +1,70 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
-import Navbar from "../components/layout/Navbar"
-import Footer from "../components/layout/Footer"
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-import Home from "../pages/Home"
-import Login from "../pages/Login"
-import StudentRegister from "./pages/StudentRegister";
-import OwnerRegister from "./pages/OwnerRegister";
+// Layouts
+import MainLayout from '../components/layout/MainLayout';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import ProtectedRoute from './ProtectedRoute';
 
+// Public Pages
+import Home from '../pages/Home';
+import Explore from '../pages/Explore';
+import HostelDetails from '../pages/HostelDetails';
+import Login from '../pages/Login';
+import StudentRegister from '../pages/StudentRegister';
+import OwnerRegister from '../pages/OwnerRegister';
+
+// Dashboard Pages
+import Overview from '../pages/dashboard/Overview';
+import Profile from '../pages/dashboard/Profile';
+import Bookings from '../pages/dashboard/Bookings';
+import Chat from '../pages/dashboard/Chat';
+import Hostels from '../pages/dashboard/Hostels';
+import HostelForm from '../pages/dashboard/HostelForm';
+import Rooms from '../pages/dashboard/Rooms';
+import RoomForm from '../pages/dashboard/RoomForm';
+import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword from '../pages/ResetPassword';
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
-      <Navbar />
-      <main className="min-h-[calc(100vh-8rem)]">
-        <Routes>
+      <Routes>
+        {/* Public Routes with Main Navbar & Footer */}
+        <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/hostels/:id" element={<HostelDetails />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register/student" element={<StudentRegister />} />
-        <Route path="/register/owner" element={<OwnerRegister />} />
-        </Routes>
-      </main>
-      <Footer />
+          <Route path="/register/owner" element={<OwnerRegister />} />
+          {/* Add a generic unauthorized page later if needed */}
+        </Route>
+
+        {/* Protected Dashboard Routes with Sidebar */}
+        <Route path="/dashboard" element={<ProtectedRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route index element={<Overview />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="bookings" element={<Bookings />} />
+            <Route path="chat" element={<Chat />} />
+
+            {/* Owner Only Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['owner']} />}>
+              <Route path="hostels" element={<Hostels />} />
+              <Route path="hostels/new" element={<HostelForm />} />
+              <Route path="hostels/:id/edit" element={<HostelForm />} />
+              <Route path="rooms" element={<Rooms />} />
+              <Route path="rooms/new" element={<RoomForm />} />
+              <Route path="rooms/:id/edit" element={<RoomForm />} />
+            </Route>
+          </Route>
+        </Route>
+
+        {/* Catch-all */}
+        <Route path="*" element={<div className="p-10 text-center text-2xl">404 Not Found</div>} />
+      </Routes>
     </BrowserRouter>
-  )
+  );
 }
