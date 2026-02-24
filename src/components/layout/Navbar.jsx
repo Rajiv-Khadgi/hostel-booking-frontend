@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import api from '../../api/axios';
 import { FaUserCircle } from 'react-icons/fa';
 
 export default function Navbar() {
@@ -11,6 +12,13 @@ export default function Navbar() {
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const getAvatarUrl = () => {
+    if (user?.profile_image) {
+      return api.defaults.baseURL.replace('/api', '') + '/' + user.profile_image;
+    }
+    return `https://ui-avatars.com/api/?name=${user?.first_name}+${user?.last_name}&background=10b981&color=fff&size=50`;
   };
 
   return (
@@ -39,10 +47,16 @@ export default function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 text-gray-700 hover:text-emerald-600 transition-colors focus:outline-none"
+                  className="flex items-center gap-2.5 text-gray-700 hover:text-emerald-600 transition-colors focus:outline-none"
                 >
                   <span className="hidden sm:block font-medium">{user.first_name}</span>
-                  <FaUserCircle className="w-8 h-8 text-gray-400" />
+                  <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+                    <img
+                      src={getAvatarUrl()}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 </button>
 
                 {dropdownOpen && (
@@ -57,6 +71,13 @@ export default function Navbar() {
                       onClick={() => setDropdownOpen(false)}
                     >
                       Dashboard
+                    </Link>
+                    <Link
+                      to="/dashboard/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      My Profile
                     </Link>
                     <button
                       onClick={() => {

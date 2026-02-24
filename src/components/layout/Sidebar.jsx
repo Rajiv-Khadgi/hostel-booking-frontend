@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import api from '../../api/axios';
 import {
     FaHome,
     FaBuilding,
@@ -13,6 +14,13 @@ import {
 
 export default function Sidebar() {
     const { user, logout } = useAuth();
+
+    const getAvatarUrl = () => {
+        if (user?.profile_image) {
+            return api.defaults.baseURL.replace('/api', '') + '/' + user.profile_image;
+        }
+        return `https://ui-avatars.com/api/?name=${user?.first_name}+${user?.last_name}&background=10b981&color=fff&size=50`;
+    };
 
     const studentLinks = [
         { name: 'Overview', path: '/dashboard', icon: FaHome, exact: true },
@@ -59,14 +67,34 @@ export default function Sidebar() {
                     })}
                 </nav>
             </div>
-            <div className="mt-auto p-4 border-t border-gray-100">
-                <button
-                    onClick={logout}
-                    className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+            <div className="mt-auto border-t border-gray-100">
+                <NavLink
+                    to="/dashboard/profile"
+                    className={({ isActive }) =>
+                        `flex items-center gap-3 px-4 py-4 hover:bg-gray-50 transition-colors border-b border-gray-50 ${isActive ? 'bg-emerald-50' : ''}`
+                    }
                 >
-                    <FaSignOutAlt className="w-5 h-5 opacity-70" />
-                    Logout
-                </button>
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shrink-0">
+                        <img
+                            src={getAvatarUrl()}
+                            alt="Profile"
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                    <div className="overflow-hidden">
+                        <p className="text-sm font-bold text-gray-900 truncate">{user?.first_name} {user?.last_name}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    </div>
+                </NavLink>
+                <div className="p-4">
+                    <button
+                        onClick={logout}
+                        className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+                    >
+                        <FaSignOutAlt className="w-5 h-5 opacity-70" />
+                        Logout
+                    </button>
+                </div>
             </div>
         </div>
     );
