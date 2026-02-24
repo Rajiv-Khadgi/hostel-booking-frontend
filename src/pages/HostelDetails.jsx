@@ -13,6 +13,9 @@ export default function HostelDetails() {
     const [error, setError] = useState('');
     const [bookingLoading, setBookingLoading] = useState(false);
 
+    const [bookingModal, setBookingModal] = useState({ isOpen: false, roomId: null });
+    const [bookingForm, setBookingForm] = useState({ startDate: new Date().toISOString().split('T')[0], months: 6 });
+
     useEffect(() => {
         const fetchHostelDetails = async () => {
             try {
@@ -28,9 +31,8 @@ export default function HostelDetails() {
         fetchHostelDetails();
     }, [id]);
 
-    const handleRequestBooking = async (roomId) => {
+    const handleRequestBooking = (roomId) => {
         if (!user) {
-            // Prompt to login
             navigate('/login', { state: { from: `/hostels/${id}` } });
             return;
         }
@@ -40,22 +42,22 @@ export default function HostelDetails() {
             return;
         }
 
+        setBookingModal({ isOpen: true, roomId });
+    };
+
+    const submitBooking = async (e) => {
+        e.preventDefault();
         try {
             setBookingLoading(true);
-            // We will assume the backend has a /bookings endpoint
-            // Adjust payload based on backend DTO (typically room_id, start_date, end_date)
-            const startDate = new Date();
-            // Default to 6 months for now
-            const endDate = new Date(new Date().setMonth(startDate.getMonth() + 6));
 
             await api.post('/bookings', {
-                room_id: roomId,
-                start_date: startDate.toISOString().split('T')[0],
-                end_date: endDate.toISOString().split('T')[0]
-                // Could also add 'guests': 1 depending on DTO
+                room_id: bookingModal.roomId,
+                start_date: bookingForm.startDate,
+                months: Number(bookingForm.months)
             });
 
             alert('Booking requested successfully! The owner will review your request.');
+            setBookingModal({ isOpen: false, roomId: null });
         } catch (err) {
             alert(err.response?.data?.error || 'Failed to request booking.');
         } finally {
@@ -265,6 +267,71 @@ export default function HostelDetails() {
 
                 </div>
             </div>
+
+            {/* Booking Modal */}
+            {bookingModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <h3 className="text-xl font-bold text-gray-900">Request Booking</h3>
+                            <button onClick={() => setBookingModal({ isOpen: false, roomId: null })} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <form onSubmit={submitBooking} className="p-6">
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        min={new Date().toISOString().split('T')[0]}
+                                        value={bookingForm.startDate}
+                                        onChange={(e) => setBookingForm({ ...bookingForm, startDate: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Duration (Months)</label>
+                                    <select
+                                        required
+                                        value={bookingForm.months}
+                                        onChange={(e) => setBookingForm({ ...bookingForm, months: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+                                    >
+                                        <option value={1}>1 Month</option>
+                                        <option value={3}>3 Months</option>
+                                        <option value={6}>6 Months</option>
+                                        <option value={12}>12 Months</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setBookingModal({ isOpen: false, roomId: null })}
+                                    className="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={bookingLoading}
+                                    className="flex-1 py-3 px-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700  shadow-sm transition-colors disabled:opacity-50 flex justify-center items-center"
+                                >
+                                    {bookingLoading ? (
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                    ) : (
+                                        'Submit Request'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
