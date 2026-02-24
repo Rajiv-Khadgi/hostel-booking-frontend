@@ -13,6 +13,13 @@ export default function HostelDetails() {
     const [error, setError] = useState('');
     const [bookingLoading, setBookingLoading] = useState(false);
 
+    const roomTypeLabels = {
+        'SINGLE': 'Single',
+        'DOUBLE': 'Double',
+        'TRIPLE': 'Triple',
+        'DORM': 'Dormitory'
+    };
+
     const [bookingModal, setBookingModal] = useState({ isOpen: false, roomId: null });
     const [bookingForm, setBookingForm] = useState({ startDate: new Date().toISOString().split('T')[0], months: 6 });
 
@@ -223,7 +230,7 @@ export default function HostelDetails() {
                                                     {/* Room Details */}
                                                     <div className="flex-1 flex justify-between items-start">
                                                         <div>
-                                                            <h4 className="font-bold text-gray-900">{room.room_type} Room</h4>
+                                                            <h4 className="font-bold text-gray-900">{roomTypeLabels[room.room_type] || room.room_type} Room</h4>
                                                             <p className="text-sm text-gray-500">
                                                                 {room.available_beds} beds left
                                                             </p>

@@ -29,7 +29,7 @@ export default function RoomForm() {
     const [hostels, setHostels] = useState([]);
     const [formData, setFormData] = useState({
         hostel_id: hostelIdFromQuery || '',
-        room_type: 'Single',
+        room_type: 'SINGLE',
         total_beds: 1,
         available_beds: 1,
         price: '',
@@ -60,7 +60,7 @@ export default function RoomForm() {
 
                     setFormData({
                         hostel_id: room.hostel_id || '',
-                        room_type: room.room_type || 'Single',
+                        room_type: room.room_type || 'SINGLE',
                         total_beds: room.total_beds || 1,
                         available_beds: room.available_beds || 1,
                         price: Number(room.price) || '',
@@ -182,12 +182,10 @@ export default function RoomForm() {
                                     onChange={handleChange}
                                     className={`appearance-none block w-full px-4 py-2.5 border ${errors.room_type ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-emerald-500'} rounded-xl shadow-sm focus:outline-none sm:text-sm transition-colors bg-gray-50 focus:bg-white`}
                                 >
-                                    <option value="Single">Single Room</option>
-                                    <option value="Double">Double Room</option>
-                                    <option value="Triple">Triple Room</option>
-                                    <option value="Dormitory">Dormitory</option>
-                                    <option value="Apartment">Apartment</option>
-                                    <option value="Studio">Studio</option>
+                                    <option value="SINGLE">Single Room</option>
+                                    <option value="DOUBLE">Double Room</option>
+                                    <option value="TRIPLE">Triple Room</option>
+                                    <option value="DORM">Dormitory</option>
                                 </select>
                                 {errors.room_type && <p className="mt-1.5 text-sm text-red-500">{errors.room_type}</p>}
                             </div>
