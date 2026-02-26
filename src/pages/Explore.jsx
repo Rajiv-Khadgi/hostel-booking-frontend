@@ -8,10 +8,25 @@ export default function Explore() {
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
     const [city, setCity] = useState('');
+    const [savedIds, setSavedIds] = useState(new Set());
+    const { user } = api.defaults.headers.common['Authorization'] ? { user: true } : { user: null }; // Simplified check for user status or useAuth if available
 
     useEffect(() => {
         fetchHostels();
+        if (localStorage.getItem('accessToken')) {
+            fetchSavedIds();
+        }
     }, [search, city]);
+
+    const fetchSavedIds = async () => {
+        try {
+            const response = await api.get('/hostels/saved');
+            const ids = new Set(response.data.hostels.map(h => h.hostel_id));
+            setSavedIds(ids);
+        } catch (err) {
+            console.error('Failed to fetch saved IDs', err);
+        }
+    };
 
     const fetchHostels = async () => {
         try {
@@ -28,6 +43,34 @@ export default function Explore() {
             setError(err.response?.data?.error || 'Failed to load hostels');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleToggleSave = async (e, id) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!localStorage.getItem('accessToken')) {
+            alert('Please login to save hostels');
+            return;
+        }
+
+        const isSaved = savedIds.has(id);
+
+        try {
+            if (isSaved) {
+                await api.delete(`/hostels/${id}/save`);
+                const newIds = new Set(savedIds);
+                newIds.delete(id);
+                setSavedIds(newIds);
+            } else {
+                await api.post(`/hostels/${id}/save`);
+                const newIds = new Set(savedIds);
+                newIds.add(id);
+                setSavedIds(newIds);
+            }
+        } catch (err) {
+            alert(err.response?.data?.error || 'Action failed');
         }
     };
 
@@ -138,6 +181,22 @@ export default function Explore() {
                                                 </svg>
                                             </div>
                                         )}
+
+                                        {/* Save Button */}
+                                        <button
+                                            onClick={(e) => handleToggleSave(e, hostel.hostel_id)}
+                                            className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-lg border border-gray-100 transition-all active:scale-95 group/save"
+                                        >
+                                            <svg
+                                                className={`w-5 h-5 transition-colors ${savedIds.has(hostel.hostel_id) ? 'fill-red-500 text-red-500' : 'text-gray-400 group-hover/save:text-red-400'}`}
+                                                viewBox="0 0 24 24"
+                                                fill={savedIds.has(hostel.hostel_id) ? "currentColor" : "none"}
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                            >
+                                                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                            </svg>
+                                        </button>
 
                                         {/* Price Badge */}
                                         <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm font-bold text-gray-900 text-sm">

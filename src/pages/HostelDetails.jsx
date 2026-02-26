@@ -12,6 +12,7 @@ export default function HostelDetails() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [bookingLoading, setBookingLoading] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
 
     const roomTypeLabels = {
         'SINGLE': 'Single',
@@ -28,6 +29,13 @@ export default function HostelDetails() {
             try {
                 const response = await api.get(`/hostels/${id}`);
                 setHostel(response.data.hostel);
+
+                // Check if already saved if user is logged in
+                if (localStorage.getItem('accessToken')) {
+                    const savedResponse = await api.get('/hostels/saved');
+                    const savedIds = savedResponse.data.hostels.map(h => h.hostel_id);
+                    setIsSaved(savedIds.includes(Number(id)));
+                }
             } catch (err) {
                 setError(err.response?.data?.error || 'Failed to load hostel details');
             } finally {
@@ -37,6 +45,25 @@ export default function HostelDetails() {
 
         fetchHostelDetails();
     }, [id]);
+
+    const handleToggleSave = async () => {
+        if (!localStorage.getItem('accessToken')) {
+            navigate('/login', { state: { from: `/hostels/${id}` } });
+            return;
+        }
+
+        try {
+            if (isSaved) {
+                await api.delete(`/hostels/${id}/save`);
+                setIsSaved(false);
+            } else {
+                await api.post(`/hostels/${id}/save`);
+                setIsSaved(true);
+            }
+        } catch (err) {
+            console.error('Failed to toggle save', err);
+        }
+    };
 
     const handleRequestBooking = (roomId) => {
         if (!user) {
@@ -130,13 +157,27 @@ export default function HostelDetails() {
                         </div>
 
                         {hostel.owner && (
-                            <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
-                                <div className="h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold">
-                                    {hostel.owner.first_name?.[0]}{hostel.owner.last_name?.[0]}
-                                </div>
-                                <div>
-                                    <p className="text-xs text-gray-500 font-medium">Managed by</p>
-                                    <p className="text-sm font-bold text-gray-900">{hostel.owner.first_name} {hostel.owner.last_name}</p>
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={handleToggleSave}
+                                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all border ${isSaved
+                                        ? 'bg-red-50 text-red-600 border-red-100'
+                                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    <svg className={`w-5 h-5 ${isSaved ? 'fill-red-500' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                    {isSaved ? 'Saved to Wishlist' : 'Save Property'}
+                                </button>
+                                <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
+                                    <div className="h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold">
+                                        {hostel.owner.first_name?.[0]}{hostel.owner.last_name?.[0]}
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 font-medium">Managed by</p>
+                                        <p className="text-sm font-bold text-gray-900">{hostel.owner.first_name} {hostel.owner.last_name}</p>
+                                    </div>
                                 </div>
                             </div>
                         )}

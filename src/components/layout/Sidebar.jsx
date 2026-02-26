@@ -9,7 +9,8 @@ import {
     FaCalendarAlt,
     FaComments,
     FaSignOutAlt,
-    FaUser
+    FaUser,
+    FaHeart
 } from 'react-icons/fa';
 
 export default function Sidebar() {
@@ -26,6 +27,7 @@ export default function Sidebar() {
         { name: 'Overview', path: '/dashboard', icon: FaHome, exact: true },
         { name: 'My Profile', path: '/dashboard/profile', icon: FaUser },
         { name: 'My Bookings', path: '/dashboard/bookings', icon: FaCalendarAlt },
+        { name: 'Saved Hostels', path: '/dashboard/saved', icon: FaHeart },
         { name: 'Chats', path: '/dashboard/chat', icon: FaComments },
     ];
 
