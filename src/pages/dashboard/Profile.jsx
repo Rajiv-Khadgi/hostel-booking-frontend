@@ -43,6 +43,16 @@ export default function Profile() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (formData.phone) {
+            // Check if phone contains only digits and is exactly 10 digits
+            const phoneRegex = /^\d{10}$/;
+            if (!phoneRegex.test(formData.phone)) {
+                setMsg({ type: 'error', text: 'Phone number must be exactly 10 positive digits' });
+                return;
+            }
+        }
+
         try {
             setLoading(true);
             const res = await api.put('/profile', formData);
