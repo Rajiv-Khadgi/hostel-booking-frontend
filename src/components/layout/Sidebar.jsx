@@ -28,6 +28,7 @@ export default function Sidebar() {
         { name: 'My Profile', path: '/dashboard/profile', icon: FaUser },
         { name: 'My Bookings', path: '/dashboard/bookings', icon: FaCalendarAlt },
         { name: 'Saved Hostels', path: '/dashboard/saved', icon: FaHeart },
+        { name: 'Scheduled Visits', path: '/dashboard/visits', icon: FaCalendarAlt },
         { name: 'Chats', path: '/dashboard/chat', icon: FaComments },
     ];
 
@@ -36,6 +37,7 @@ export default function Sidebar() {
         { name: 'My Hostels', path: '/dashboard/hostels', icon: FaBuilding },
         { name: 'Rooms', path: '/dashboard/rooms', icon: FaBed },
         { name: 'Bookings', path: '/dashboard/bookings', icon: FaCalendarAlt },
+        { name: 'Scheduled Visits', path: '/dashboard/visits', icon: FaCalendarAlt },
         { name: 'Chats', path: '/dashboard/chat', icon: FaComments },
     ];
 

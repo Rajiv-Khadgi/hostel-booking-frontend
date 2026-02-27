@@ -23,6 +23,7 @@ import HostelForm from '../pages/dashboard/HostelForm';
 import Rooms from '../pages/dashboard/Rooms';
 import RoomForm from '../pages/dashboard/RoomForm';
 import SavedHostels from '../pages/dashboard/SavedHostels';
+import Visits from '../pages/dashboard/Visits';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
 
@@ -51,6 +52,7 @@ export default function AppRoutes() {
             <Route path="bookings" element={<Bookings />} />
             <Route path="chat" element={<Chat />} />
             <Route path="saved" element={<SavedHostels />} />
+            <Route path="visits" element={<Visits />} />
 
             {/* Owner Only Routes */}
             <Route element={<ProtectedRoute allowedRoles={['owner']} />}>

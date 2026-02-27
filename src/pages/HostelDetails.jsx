@@ -23,6 +23,9 @@ export default function HostelDetails() {
 
     const [bookingModal, setBookingModal] = useState({ isOpen: false, roomId: null });
     const [bookingForm, setBookingForm] = useState({ startDate: new Date().toISOString().split('T')[0], months: 6 });
+    const [visitModal, setVisitModal] = useState({ isOpen: false });
+    const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]);
+    const [visitLoading, setVisitLoading] = useState(false);
 
     useEffect(() => {
         const fetchHostelDetails = async () => {
@@ -99,6 +102,23 @@ export default function HostelDetails() {
         }
     };
 
+    const submitVisit = async (e) => {
+        e.preventDefault();
+        try {
+            setVisitLoading(true);
+            await api.post('/visits', {
+                hostel_id: id,
+                visit_date: visitDate
+            });
+            alert('Visit scheduled successfully! You can track it in your dashboard.');
+            setVisitModal({ isOpen: false });
+        } catch (err) {
+            alert(err.response?.data?.error || 'Failed to schedule visit.');
+        } finally {
+            setVisitLoading(false);
+        }
+    };
+
 
     if (loading) {
         return (
@@ -157,7 +177,22 @@ export default function HostelDetails() {
                         </div>
 
                         {hostel.owner && (
-                            <div className="flex items-center gap-4">
+                            <div className="flex flex-wrap items-center gap-4">
+                                <button
+                                    onClick={() => {
+                                        if (!user) {
+                                            navigate('/login', { state: { from: `/hostels/${id}` } });
+                                            return;
+                                        }
+                                        setVisitModal({ isOpen: true });
+                                    }}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-sm"
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    Schedule a Visit
+                                </button>
                                 <button
                                     onClick={handleToggleSave}
                                     className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all border ${isSaved
@@ -373,6 +408,63 @@ export default function HostelDetails() {
                                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                                     ) : (
                                         'Submit Request'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Visit Modal */}
+            {visitModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <h3 className="text-xl font-bold text-gray-900">Schedule a Visit</h3>
+                            <button onClick={() => setVisitModal({ isOpen: false })} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <form onSubmit={submitVisit} className="p-6">
+                            <div className="space-y-4 mb-6">
+                                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex gap-3 text-emerald-800 text-sm">
+                                    <svg className="h-5 w-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p>Select a date you'd like to visit the property. The owner will notify you if it's confirmed.</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Date</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]} // Min tomorrow
+                                        value={visitDate}
+                                        onChange={(e) => setVisitDate(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setVisitModal({ isOpen: false })}
+                                    className="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={visitLoading}
+                                    className="flex-1 py-3 px-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 shadow-sm transition-colors disabled:opacity-50 flex justify-center items-center"
+                                >
+                                    {visitLoading ? (
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                    ) : (
+                                        'Schedule Visit'
                                     )}
                                 </button>
                             </div>
