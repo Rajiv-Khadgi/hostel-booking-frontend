@@ -27,11 +27,18 @@ export default function HostelDetails() {
     const [visitDate, setVisitDate] = useState(new Date().toISOString().split('T')[0]);
     const [visitLoading, setVisitLoading] = useState(false);
 
+    const [reviews, setReviews] = useState([]);
+    const [reviewForm, setReviewForm] = useState({ rating: 5, comments: '' });
+    const [submittingReview, setSubmittingReview] = useState(false);
+
     useEffect(() => {
         const fetchHostelDetails = async () => {
             try {
                 const response = await api.get(`/hostels/${id}`);
                 setHostel(response.data.hostel);
+
+                // Fetch reviews separately to ensure they are up to date
+                fetchReviews();
 
                 // Check if already saved if user is logged in
                 if (localStorage.getItem('accessToken')) {
@@ -48,6 +55,15 @@ export default function HostelDetails() {
 
         fetchHostelDetails();
     }, [id]);
+
+    const fetchReviews = async () => {
+        try {
+            const response = await api.get(`/hostels/${id}/reviews`);
+            setReviews(response.data.reviews || []);
+        } catch (err) {
+            console.error('Failed to fetch reviews', err);
+        }
+    };
 
     const handleToggleSave = async () => {
         if (!localStorage.getItem('accessToken')) {
@@ -116,6 +132,31 @@ export default function HostelDetails() {
             alert(err.response?.data?.error || 'Failed to schedule visit.');
         } finally {
             setVisitLoading(false);
+        }
+    };
+
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            setSubmittingReview(true);
+            await api.post(`/hostels/${id}/reviews`, reviewForm);
+            setReviewForm({ rating: 5, comments: '' });
+            fetchReviews();
+            alert('Review submitted successfully!');
+        } catch (err) {
+            alert(err.response?.data?.error || 'Failed to submit review. Make sure you have a verified stay.');
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
+
+    const handleDeleteReview = async (reviewId) => {
+        if (!window.confirm('Are you sure you want to delete your review?')) return;
+        try {
+            await api.delete(`/reviews/${reviewId}`);
+            fetchReviews();
+        } catch (err) {
+            alert('Failed to delete review');
         }
     };
 
@@ -268,6 +309,130 @@ export default function HostelDetails() {
                                 </div>
                             ) : (
                                 <p className="text-gray-500 italic">No amenities listed.</p>
+                            )}
+                        </section>
+
+                        <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
+                            <div className="flex justify-between items-center mb-8">
+                                <h2 className="text-2xl font-bold text-gray-900">Guest Reviews</h2>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex text-amber-400">
+                                        {[...Array(5)].map((_, i) => (
+                                            <svg key={i} className={`w-5 h-5 ${i < Math.round(reviews.reduce((acc, r) => acc + r.rating, 0) / (reviews.length || 1)) ? 'fill-current' : 'text-gray-200'}`} viewBox="0 0 20 20">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                            </svg>
+                                        ))}
+                                    </div>
+                                    <span className="font-bold text-gray-900">{reviews.length > 0 ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1) : 'No ratings'}</span>
+                                    <span className="text-gray-400 text-sm">({reviews.length} reviews)</span>
+                                </div>
+                            </div>
+
+                            {/* Inline Review Form */}
+                            {user?.role === 'student' && !reviews.some(r => r.user_id === user.id) && (
+                                <div className="mb-10 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <h3 className="font-bold text-gray-900 mb-4">Leave a Review</h3>
+                                    <form onSubmit={handleReviewSubmit} className="space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                                                    className={`p-1 transition-transform active:scale-90 ${star <= reviewForm.rating ? 'text-amber-400' : 'text-gray-300'}`}
+                                                >
+                                                    <svg className="w-8 h-8 fill-current" viewBox="0 0 20 20">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                    </svg>
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <textarea
+                                            placeholder="Share your experience staying here..."
+                                            required
+                                            value={reviewForm.comments}
+                                            onChange={(e) => setReviewForm({ ...reviewForm, comments: e.target.value })}
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow min-h-[100px]"
+                                        />
+                                        <button
+                                            type="submit"
+                                            disabled={submittingReview}
+                                            className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                                        >
+                                            {submittingReview ? 'Submitting...' : 'Post Review'}
+                                        </button>
+                                    </form>
+                                </div>
+                            )}
+
+                            {reviews.length > 0 ? (
+                                <div className="space-y-8">
+                                    {reviews.map((review) => (
+                                        <div key={review.review_id} className="border-b border-gray-50 pb-8 last:border-0 last:pb-0">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-100 bg-gray-50">
+                                                        {review.reviewer?.profile_image ? (
+                                                            <img
+                                                                src={api.defaults.baseURL.replace('/api', '') + '/' + review.reviewer.profile_image}
+                                                                className="w-full h-full object-cover"
+                                                                alt={review.reviewer.first_name}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-emerald-50 text-emerald-700 font-bold">
+                                                                {review.reviewer?.first_name?.[0]}{review.reviewer?.last_name?.[0]}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900">{review.reviewer?.first_name} {review.reviewer?.last_name}</p>
+                                                        <div className="flex text-amber-400 scale-75 origin-left">
+                                                            {[...Array(5)].map((_, i) => (
+                                                                <svg key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-200'}`} viewBox="0 0 20 20">
+                                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                </svg>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className="text-xs text-gray-400">
+                                                        {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'Recently'}
+                                                    </span>
+                                                    {user?.id === review.user_id && (
+                                                        <button
+                                                            onClick={() => handleDeleteReview(review.review_id)}
+                                                            className="text-xs text-red-500 hover:text-red-700 font-medium"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <p className="text-gray-600 leading-relaxed mb-4">{review.comments}</p>
+
+                                            {review.reply && (
+                                                <div className="ml-8 p-5 bg-emerald-50 rounded-2xl border border-emerald-100">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <div className="h-6 w-6 bg-emerald-200 rounded-full flex items-center justify-center text-[10px] text-emerald-800 font-bold">
+                                                            {hostel.owner?.first_name?.[0]}{hostel.owner?.last_name?.[0]}
+                                                        </div>
+                                                        <p className="text-sm font-bold text-emerald-900">Owner's Response</p>
+                                                        <span className="text-[10px] text-emerald-600/60 ml-auto">
+                                                            {review.reply_date ? new Date(review.reply_date).toLocaleDateString() : ''}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-emerald-800 leading-relaxed">{review.reply}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-10 px-6 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                                    <p className="text-gray-500 font-medium">No reviews yet.</p>
+                                    <p className="text-sm text-gray-400 mt-1">Be the first to share your experience!</p>
+                                </div>
                             )}
                         </section>
                     </div>
