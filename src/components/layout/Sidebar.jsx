@@ -10,7 +10,9 @@ import {
     FaComments,
     FaSignOutAlt,
     FaUser,
-    FaHeart
+    FaHeart,
+    FaStar,
+    FaChartLine
 } from 'react-icons/fa';
 
 export default function Sidebar() {
@@ -33,8 +35,9 @@ export default function Sidebar() {
     ];
 
     const ownerLinks = [
-        { name: 'Overview', path: '/dashboard', icon: FaHome, exact: true },
+        { name: 'Dashboard', path: '/dashboard/owner', icon: FaChartLine },
         { name: 'My Hostels', path: '/dashboard/hostels', icon: FaBuilding },
+        { name: 'Property Reviews', path: '/dashboard/hostel-reviews', icon: FaStar },
         { name: 'Rooms', path: '/dashboard/rooms', icon: FaBed },
         { name: 'Bookings', path: '/dashboard/bookings', icon: FaCalendarAlt },
         { name: 'Scheduled Visits', path: '/dashboard/visits', icon: FaCalendarAlt },

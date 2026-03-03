@@ -24,6 +24,7 @@ import Rooms from '../pages/dashboard/Rooms';
 import RoomForm from '../pages/dashboard/RoomForm';
 import SavedHostels from '../pages/dashboard/SavedHostels';
 import Visits from '../pages/dashboard/Visits';
+import HostelReviews from '../pages/dashboard/HostelReviews';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
 
@@ -59,6 +60,7 @@ export default function AppRoutes() {
               <Route path="hostels" element={<Hostels />} />
               <Route path="hostels/new" element={<HostelForm />} />
               <Route path="hostels/:id/edit" element={<HostelForm />} />
+              <Route path="hostel-reviews" element={<HostelReviews />} />
               <Route path="rooms" element={<Rooms />} />
               <Route path="rooms/new" element={<RoomForm />} />
               <Route path="rooms/:id/edit" element={<RoomForm />} />

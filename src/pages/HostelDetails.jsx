@@ -397,7 +397,7 @@ export default function HostelDetails() {
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1">
                                                     <span className="text-xs text-gray-400">
-                                                        {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'Recently'}
+                                                        {(review.created_at || review.createdAt) ? new Date(review.created_at || review.createdAt).toLocaleDateString() : 'Recently'}
                                                     </span>
                                                     {user?.id === review.user_id && (
                                                         <button
