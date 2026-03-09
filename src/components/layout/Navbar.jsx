@@ -26,7 +26,7 @@ export default function Navbar() {
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center gap-6">
-            <Link to="/" className="flex-shrink-0 flex items-center gap-2 group">
+            <Link to="/" className="shrink-0 flex items-center gap-2 group">
               <div className="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm group-hover:bg-emerald-700 transition-colors">
                 H
               </div>

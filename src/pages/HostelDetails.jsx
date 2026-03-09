@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api/axios';
+import { FaComments, FaCalendarAlt } from 'react-icons/fa';
 
 export default function HostelDetails() {
     const { id } = useParams();
@@ -150,6 +151,20 @@ export default function HostelDetails() {
         }
     };
 
+    const handleStartChat = async () => {
+        if (!user) {
+            navigate('/login', { state: { from: `/hostels/${id}` } });
+            return;
+        }
+        try {
+            const res = await api.post('/chat/conversations', { targetUserId: hostel.user_id });
+            navigate('/dashboard/chat');
+        } catch (err) {
+            console.error('Chat error:', err);
+            alert('Failed to start chat');
+        }
+    };
+
     const handleDeleteReview = async (reviewId) => {
         if (!window.confirm('Are you sure you want to delete your review?')) return;
         try {
@@ -233,6 +248,13 @@ export default function HostelDetails() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                     Schedule a Visit
+                                </button>
+                                <button
+                                    onClick={handleStartChat}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-white text-emerald-600 border border-emerald-600 rounded-xl font-bold hover:bg-emerald-50 transition-all shadow-sm"
+                                >
+                                    <FaComments className="w-5 h-5" />
+                                    Chat with Owner
                                 </button>
                                 <button
                                     onClick={handleToggleSave}
