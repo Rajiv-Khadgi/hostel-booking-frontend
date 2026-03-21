@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 
 const registrationSchema = Yup.object().shape({
   first_name: Yup.string().required('First name is required').min(2, 'Too short'),
+  middle_name: Yup.string().nullable().optional(),
   last_name: Yup.string().required('Last name is required').min(2, 'Too short'),
   email: Yup.string().email('Invalid email address').required('Email is required'),
   phone: Yup.string().required('Phone number is required').matches(/^[0-9]+$/, 'Must be only digits').min(10, 'Must be at least 10 digits'),
@@ -17,6 +18,7 @@ const registrationSchema = Yup.object().shape({
 export default function StudentRegister() {
   const [formData, setFormData] = useState({
     first_name: '',
+    middle_name: '',
     last_name: '',
     email: '',
     phone: '',
@@ -48,6 +50,7 @@ export default function StudentRegister() {
 
       const payload = {
         first_name: formData.first_name,
+        middle_name: formData.middle_name,
         last_name: formData.last_name,
         email: formData.email,
         phone: formData.phone,
@@ -95,7 +98,7 @@ export default function StudentRegister() {
           )}
 
           <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
                 <input
@@ -106,6 +109,16 @@ export default function StudentRegister() {
                   className={`appearance-none block w-full px-4 py-3 border ${errors.first_name ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 focus:ring-emerald-500 focus:border-emerald-500'} rounded-xl shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm transition-colors bg-gray-50 focus:bg-white`}
                 />
                 {errors.first_name && <p className="mt-1 text-xs text-red-500">{errors.first_name}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Middle Name (Optional)</label>
+                <input
+                  name="middle_name"
+                  type="text"
+                  value={formData.middle_name}
+                  onChange={handleChange}
+                  className="appearance-none block w-full px-4 py-3 border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none sm:text-sm transition-colors bg-gray-50 focus:bg-white"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>

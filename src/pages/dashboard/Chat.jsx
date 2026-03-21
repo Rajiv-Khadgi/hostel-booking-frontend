@@ -30,7 +30,6 @@ export default function Chat() {
         socket.on('receive_message', (message) => {
             // Only add if it belongs to the active conversation
             setMessages(prev => {
-                // If it's for the current conversation, add it
                 if (activeConversation && message.conversation_id === activeConversation.conversation_id) {
                     // Automatically mark as read if it's currently active and not from me
                     if (message.sender_id !== user.id) {
@@ -48,10 +47,14 @@ export default function Chat() {
             setConversations(prev => {
                 return prev.map(conv => {
                     if (conv.conversation_id === message.conversation_id) {
+                        const isNotActive = activeConversation?.conversation_id !== message.conversation_id;
+                        const isFromOthers = message.sender_id !== user.id;
+                        
                         return {
                             ...conv,
                             messages: [message],
-                            last_message_at: message.created_at || message.createdAt
+                            last_message_at: message.created_at || message.createdAt,
+                            unreadCount: (isNotActive && isFromOthers) ? (conv.unreadCount || 0) + 1 : conv.unreadCount
                         };
                     }
                     return conv;
@@ -77,10 +80,15 @@ export default function Chat() {
 
             setConversations(prev => prev.map(conv => {
                 if (conv.conversation_id === conversationId) {
+                    const isReaderMe = readerId === user.id;
                     const updatedMessages = conv.messages.map(msg =>
                         msg.sender_id !== readerId ? { ...msg, is_read: true } : msg
                     );
-                    return { ...conv, messages: updatedMessages };
+                    return { 
+                        ...conv, 
+                        messages: updatedMessages,
+                        unreadCount: isReaderMe ? 0 : conv.unreadCount
+                    };
                 }
                 return conv;
             }));
@@ -185,7 +193,7 @@ export default function Chat() {
 
     const filteredConversations = conversations.filter(conv => {
         const partner = getChatPartner(conv);
-        const name = `${partner.first_name} ${partner.last_name}`.toLowerCase();
+        const name = `${partner.first_name} ${partner.middle_name ? partner.middle_name + ' ' : ''}${partner.last_name}`.toLowerCase();
         return name.includes(searching.toLowerCase());
     });
 
@@ -261,7 +269,7 @@ export default function Chat() {
                                                 />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center bg-emerald-50 text-emerald-700 font-bold">
-                                                    {partner.first_name[0]}{partner.last_name[0]}
+                                                    {partner.first_name[0]}{partner.middle_name ? partner.middle_name[0] : ''}{partner.last_name[0]}
                                                 </div>
                                             )}
                                         </div>
@@ -272,16 +280,25 @@ export default function Chat() {
                                     <div className="flex-1 text-left overflow-hidden">
                                         <div className="flex justify-between items-center mb-0.5">
                                             <p className={`font-bold truncate ${isActive ? 'text-white' : 'text-gray-900'}`}>
-                                                {partner.first_name} {partner.last_name}
+                                                {partner.first_name} {partner.middle_name ? partner.middle_name + ' ' : ''}{partner.last_name}
                                             </p>
-                                            {lastMsg && (
-                                                <span className={`text-[10px] ${isActive ? 'text-emerald-100' : 'text-gray-400'}`}>
-                                                    {new Date(lastMsg.created_at || lastMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                </span>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                {conv.unreadCount > 0 && (
+                                                    <span className={`flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold ${isActive ? 'bg-white text-emerald-600' : 'bg-emerald-600 text-white'}`}>
+                                                        {conv.unreadCount}
+                                                    </span>
+                                                )}
+                                                {lastMsg && (
+                                                    <span className={`text-[10px] ${isActive ? 'text-emerald-100' : 'text-gray-400'}`}>
+                                                        {new Date(lastMsg.created_at || lastMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         <p className={`text-xs truncate ${isActive ? 'text-emerald-50' : 'text-gray-500'}`}>
-                                            {lastMsg?.content || 'No messages yet'}
+                                            {lastMsg?.content || (
+                                                <span className="italic opacity-70">New Chat</span>
+                                            )}
                                         </p>
                                     </div>
                                 </button>
@@ -314,13 +331,13 @@ export default function Chat() {
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-emerald-700 font-bold">
-                                            {getChatPartner(activeConversation).first_name[0]}
+                                            {getChatPartner(activeConversation).first_name[0]}{getChatPartner(activeConversation).middle_name ? getChatPartner(activeConversation).middle_name[0] : ''}
                                         </div>
                                     )}
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-gray-900 leading-none">
-                                        {getChatPartner(activeConversation).first_name} {getChatPartner(activeConversation).last_name}
+                                        {getChatPartner(activeConversation).first_name} {getChatPartner(activeConversation).middle_name ? getChatPartner(activeConversation).middle_name + ' ' : ''}{getChatPartner(activeConversation).last_name}
                                     </h3>
                                     <span className={`text-[10px] font-medium flex items-center gap-1 mt-1 ${isUserOnline(getChatPartner(activeConversation).user_id) ? 'text-emerald-500' : 'text-gray-400'}`}>
                                         <FaCircle className="w-1.5 h-1.5" /> {isUserOnline(getChatPartner(activeConversation).user_id) ? 'Online' : 'Offline'}
@@ -373,7 +390,24 @@ export default function Chat() {
                                                             )}
                                                         </div>
                                                     )}
-                                                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                                                    <p className="text-sm leading-relaxed">
+                                                        {msg.content.split(/(\s+)/).map((part, i) => {
+                                                            if (part.match(/^https?:\/\/[^\s$.?#].[^\s]*$/)) {
+                                                                return (
+                                                                    <a 
+                                                                        key={i} 
+                                                                        href={part} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer" 
+                                                                        className="underline break-all hover:opacity-80 transition-opacity"
+                                                                    >
+                                                                        {part}
+                                                                    </a>
+                                                                );
+                                                            }
+                                                            return part;
+                                                        })}
+                                                    </p>
                                                 </div>
                                                 <div className={`flex items-center gap-1.5 mt-1.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                                                     <span className="text-[9px] text-gray-400">

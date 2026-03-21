@@ -6,6 +6,7 @@ export default function Profile() {
     const { user, updateUser } = useAuth();
     const [formData, setFormData] = useState({
         first_name: user?.first_name || '',
+        middle_name: user?.middle_name || '',
         last_name: user?.last_name || '',
         phone: user?.phone || '',
         dob: user?.dob || '',
@@ -69,7 +70,7 @@ export default function Profile() {
         if (user?.profile_image) {
             return api.defaults.baseURL.replace('/api', '') + '/' + user.profile_image;
         }
-        return `https://ui-avatars.com/api/?name=${user?.first_name}+${user?.last_name}&background=10b981&color=fff&size=200`;
+        return `https://ui-avatars.com/api/?name=${user?.first_name}+${user?.middle_name ? user.middle_name + '+' : ''}${user?.last_name}&background=10b981&color=fff&size=200`;
     };
 
     return (
@@ -111,7 +112,7 @@ export default function Profile() {
                         </div>
 
                         <div className="space-y-1">
-                            <h2 className="text-xl font-bold text-gray-900">{user?.first_name} {user?.last_name}</h2>
+                            <h2 className="text-xl font-bold text-gray-900">{user?.first_name} {user?.middle_name ? user.middle_name + ' ' : ''}{user?.last_name}</h2>
                             <p className="text-sm text-gray-500">{user?.email}</p>
                             <span className="inline-flex mt-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 border border-emerald-200">
                                 {user?.role}
@@ -146,7 +147,7 @@ export default function Profile() {
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                             <div className="sm:col-span-1">
                                 <label className="block text-sm font-medium text-gray-700 mb-1.5">First Name</label>
                                 <input
@@ -157,6 +158,17 @@ export default function Profile() {
                                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm"
                                     placeholder="Enter your first name"
                                     required
+                                />
+                            </div>
+                            <div className="sm:col-span-1">
+                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Middle Name</label>
+                                <input
+                                    type="text"
+                                    name="middle_name"
+                                    value={formData.middle_name}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm"
+                                    placeholder="Middle name (optional)"
                                 />
                             </div>
                             <div className="sm:col-span-1">

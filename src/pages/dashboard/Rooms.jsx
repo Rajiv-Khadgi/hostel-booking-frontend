@@ -174,14 +174,19 @@ export default function Rooms() {
                                                 {/* Type & Status */}
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <span className="text-sm font-bold text-gray-900">{roomTypeLabels[room.room_type] || room.room_type} Room</span>
+                                                        <span className="text-sm font-bold text-gray-900">
+                                                            {room.room_number ? `Room ${room.room_number}` : `${roomTypeLabels[room.room_type] || room.room_type} Room`}
+                                                        </span>
                                                         {room.status === 'AVAILABLE' ? (
                                                             <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full"></span>
                                                         ) : (
                                                             <span className="inline-block w-2 h-2 bg-red-500 rounded-full"></span>
                                                         )}
                                                     </div>
-                                                    <div className="text-xs text-gray-500 capitalize">{room.status.toLowerCase()}</div>
+                                                    <div className="text-xs text-gray-500 capitalize">
+                                                        {room.room_number ? `${roomTypeLabels[room.room_type] || room.room_type} • ` : ''}
+                                                        {room.status.toLowerCase()}
+                                                    </div>
                                                 </div>
 
                                                 {/* Price */}

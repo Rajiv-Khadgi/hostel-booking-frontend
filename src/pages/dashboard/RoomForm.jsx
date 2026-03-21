@@ -16,6 +16,7 @@ const roomSchema = Yup.object().shape({
             return value <= this.parent.total_beds;
         }),
     price: Yup.number().typeError('Must be a number').positive('Must be positive').required('Price is required'),
+    room_number: Yup.string().required('Room number is required'),
     description: Yup.string()
 });
 
@@ -33,6 +34,7 @@ export default function RoomForm() {
         total_beds: 1,
         available_beds: 1,
         price: '',
+        room_number: '',
         description: ''
     });
 
@@ -64,6 +66,7 @@ export default function RoomForm() {
                         total_beds: room.total_beds || 1,
                         available_beds: room.available_beds || 1,
                         price: Number(room.price) || '',
+                        room_number: room.room_number || '',
                         description: room.description || ''
                     });
                 }
@@ -156,21 +159,35 @@ export default function RoomForm() {
                     <div className="space-y-4">
 
                         {/* Hostel Selection (Readonly in edit mode typically, but let's allow it if needed, or disable it) */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Target Property <span className="text-red-500">*</span></label>
-                            <select
-                                name="hostel_id"
-                                value={formData.hostel_id}
-                                onChange={handleChange}
-                                disabled={isEditMode} // Usually don't move rooms between hostels
-                                className={`appearance-none block w-full px-4 py-2.5 border ${isEditMode ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-gray-50 focus:bg-white border-gray-200 focus:ring-emerald-500'
-                                    } rounded-xl shadow-sm focus:outline-none sm:text-sm transition-colors`}
-                            >
-                                <option value="" disabled>Select a hostel</option>
-                                {hostels.map(h => (
-                                    <option key={h.hostel_id} value={h.hostel_id}>{h.name}</option>
-                                ))}
-                            </select>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Target Property <span className="text-red-500">*</span></label>
+                                <select
+                                    name="hostel_id"
+                                    value={formData.hostel_id}
+                                    onChange={handleChange}
+                                    disabled={isEditMode}
+                                    className={`appearance-none block w-full px-4 py-2.5 border ${isEditMode ? 'bg-gray-100 text-gray-500 border-gray-200' : 'bg-gray-50 focus:bg-white border-gray-200 focus:ring-emerald-500'
+                                        } rounded-xl shadow-sm focus:outline-none sm:text-sm transition-colors`}
+                                >
+                                    <option value="" disabled>Select a hostel</option>
+                                    {hostels.map(h => (
+                                        <option key={h.hostel_id} value={h.hostel_id}>{h.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Room Number / Name <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    name="room_number"
+                                    value={formData.room_number}
+                                    onChange={handleChange}
+                                    className={`appearance-none block w-full px-4 py-2.5 border ${errors.room_number ? 'border-red-300 focus:ring-red-500' : 'border-gray-200 focus:ring-emerald-500'} rounded-xl shadow-sm focus:outline-none sm:text-sm transition-colors bg-gray-50 focus:bg-white`}
+                                    placeholder="E.g., 101, A-1"
+                                />
+                                {errors.room_number && <p className="mt-1.5 text-sm text-red-500">{errors.room_number}</p>}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

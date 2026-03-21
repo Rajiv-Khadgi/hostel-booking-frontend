@@ -85,7 +85,7 @@ export default function HostelDetails() {
         }
     };
 
-    const handleRequestBooking = (roomId) => {
+    const handleRequestBooking = (group) => {
         if (!user) {
             navigate('/login', { state: { from: `/hostels/${id}` } });
             return;
@@ -96,7 +96,13 @@ export default function HostelDetails() {
             return;
         }
 
-        setBookingModal({ isOpen: true, roomId });
+        // Auto-select the first room with available beds if multiple exist
+        const defaultRoom = group.rooms.find(r => r.available_beds > 0) || group.rooms[0];
+        setBookingModal({ 
+            isOpen: true, 
+            roomId: defaultRoom.room_id,
+            group: group 
+        });
     };
 
     const submitBooking = async (e) => {
@@ -175,6 +181,35 @@ export default function HostelDetails() {
         }
     };
 
+
+    // Group rooms by type and price for cleaner display
+    const groupedRooms = React.useMemo(() => {
+        if (!hostel?.rooms) return [];
+        const groups = hostel.rooms.reduce((acc, room) => {
+            const key = `${room.room_type}_${room.price}`;
+            if (!acc[key]) {
+                acc[key] = {
+                    room_type: room.room_type,
+                    price: room.price,
+                    description: room.description,
+                    images: room.images || [],
+                    rooms: [room],
+                    totalAvailableBeds: room.available_beds,
+                    totalBeds: room.total_beds
+                };
+            } else {
+                acc[key].rooms.push(room);
+                acc[key].totalAvailableBeds += room.available_beds;
+                acc[key].totalBeds += room.total_beds;
+                // If the first room had no description, try another
+                if (!acc[key].description && room.description) acc[key].description = room.description;
+                // Accumulate images if any
+                if (room.images) acc[key].images = [...acc[key].images, ...room.images];
+            }
+            return acc;
+        }, {});
+        return Object.values(groups);
+    }, [hostel?.rooms]);
 
     if (loading) {
         return (
@@ -270,11 +305,11 @@ export default function HostelDetails() {
                                 </button>
                                 <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
                                     <div className="h-10 w-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold">
-                                        {hostel.owner.first_name?.[0]}{hostel.owner.last_name?.[0]}
+                                        {hostel.owner.first_name?.[0]}{hostel.owner.middle_name?.[0]}{hostel.owner.last_name?.[0]}
                                     </div>
                                     <div>
                                         <p className="text-xs text-gray-500 font-medium">Managed by</p>
-                                        <p className="text-sm font-bold text-gray-900">{hostel.owner.first_name} {hostel.owner.last_name}</p>
+                                        <p className="text-sm font-bold text-gray-900">{hostel.owner.first_name} {hostel.owner.middle_name ? hostel.owner.middle_name + ' ' : ''}{hostel.owner.last_name}</p>
                                     </div>
                                 </div>
                             </div>
@@ -402,12 +437,12 @@ export default function HostelDetails() {
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-gray-400 bg-emerald-50 text-emerald-700 font-bold">
-                                                                {review.reviewer?.first_name?.[0]}{review.reviewer?.last_name?.[0]}
+                                                                {review.reviewer?.first_name?.[0]}{review.reviewer?.middle_name?.[0]}{review.reviewer?.last_name?.[0]}
                                                             </div>
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-900">{review.reviewer?.first_name} {review.reviewer?.last_name}</p>
+                                                        <p className="font-bold text-gray-900">{review.reviewer?.first_name} {review.reviewer?.middle_name ? review.reviewer.middle_name + ' ' : ''}{review.reviewer?.last_name}</p>
                                                         <div className="flex text-amber-400 scale-75 origin-left">
                                                             {[...Array(5)].map((_, i) => (
                                                                 <svg key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-200'}`} viewBox="0 0 20 20">
@@ -468,17 +503,17 @@ export default function HostelDetails() {
                             </div>
 
                             <div className="p-0">
-                                {hostel.rooms && hostel.rooms.length > 0 ? (
+                                {groupedRooms.length > 0 ? (
                                     <ul className="divide-y divide-gray-100 max-h-[500px] overflow-y-auto no-scrollbar">
-                                        {hostel.rooms.map(room => (
-                                            <li key={room.room_id} className="p-5 hover:bg-gray-50 transition-colors">
+                                        {groupedRooms.map((group, idx) => (
+                                            <li key={idx} className="p-5 hover:bg-gray-50 transition-colors">
                                                 <div className="flex gap-4 items-start mb-3">
                                                     {/* Room Image Thumbnail */}
                                                     <div className="w-20 h-20 shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                                                        {room.images && room.images.length > 0 ? (
+                                                        {group.images && group.images.length > 0 ? (
                                                             <img
-                                                                src={api.defaults.baseURL.replace('/api', '') + room.images[0].image_url}
-                                                                alt={`${room.room_type} Room`}
+                                                                src={api.defaults.baseURL.replace('/api', '') + group.images[0].image_url}
+                                                                alt={`${group.room_type} Room`}
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         ) : (
@@ -493,31 +528,33 @@ export default function HostelDetails() {
                                                     {/* Room Details */}
                                                     <div className="flex-1 flex justify-between items-start">
                                                         <div>
-                                                            <h4 className="font-bold text-gray-900">{roomTypeLabels[room.room_type] || room.room_type} Room</h4>
+                                                            <h4 className="font-bold text-gray-900">
+                                                                {roomTypeLabels[group.room_type] || group.room_type} Room
+                                                            </h4>
                                                             <p className="text-sm text-gray-500">
-                                                                {room.available_beds} beds left
+                                                                {group.totalAvailableBeds} beds left across {group.rooms.length} rooms
                                                             </p>
                                                         </div>
                                                         <div className="text-right">
-                                                            <p className="text-lg font-bold text-emerald-600">Rs. {Number(room.price).toLocaleString()}</p>
+                                                            <p className="text-lg font-bold text-emerald-600">Rs. {Number(group.price).toLocaleString()}</p>
                                                             <p className="text-xs text-gray-400">/ month</p>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                {room.description && (
-                                                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{room.description}</p>
+                                                {group.description && (
+                                                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{group.description}</p>
                                                 )}
 
                                                 <button
-                                                    onClick={() => handleRequestBooking(room.room_id)}
-                                                    disabled={bookingLoading || room.status === 'FULL'}
-                                                    className={`w-full py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 ${room.status === 'FULL'
+                                                    onClick={() => handleRequestBooking(group)}
+                                                    disabled={bookingLoading || group.totalAvailableBeds === 0}
+                                                    className={`w-full py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 ${group.totalAvailableBeds === 0
                                                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                                         : 'bg-emerald-600 hover:bg-emerald-700 text-white'
                                                         }`}
                                                 >
-                                                    {room.status === 'FULL' ? 'No Vacancy' : (bookingLoading ? 'Requesting...' : 'Request Booking')}
+                                                    {group.totalAvailableBeds === 0 ? 'No Vacancy' : (bookingLoading ? 'Requesting...' : 'Request Booking')}
                                                 </button>
                                             </li>
                                         ))}
@@ -563,6 +600,24 @@ export default function HostelDetails() {
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
                                     />
                                 </div>
+                                
+                                {bookingModal.group && bookingModal.group.rooms.length > 1 && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Room Number (Optional)</label>
+                                        <select
+                                            value={bookingModal.roomId}
+                                            onChange={(e) => setBookingModal({ ...bookingModal, roomId: Number(e.target.value) })}
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+                                        >
+                                            {bookingModal.group.rooms.map(r => (
+                                                <option key={r.room_id} value={r.room_id} disabled={r.available_beds === 0}>
+                                                    {r.room_number ? `Room ${r.room_number}` : `Room #${r.room_id}`} 
+                                                    ({r.available_beds} beds left)
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Duration (Months)</label>
                                     <select
