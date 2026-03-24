@@ -19,6 +19,7 @@ import Profile from '../pages/dashboard/Profile';
 import Bookings from '../pages/dashboard/Bookings';
 import Chat from '../pages/dashboard/Chat';
 import Hostels from '../pages/dashboard/Hostels';
+import Payments from '../pages/dashboard/Payments';
 import HostelForm from '../pages/dashboard/HostelForm';
 import Rooms from '../pages/dashboard/Rooms';
 import RoomForm from '../pages/dashboard/RoomForm';
@@ -27,6 +28,7 @@ import Visits from '../pages/dashboard/Visits';
 import HostelReviews from '../pages/dashboard/HostelReviews';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
+import PaymentCallback from '../pages/payment/PaymentCallback';
 
 export default function AppRoutes() {
   return (
@@ -42,6 +44,7 @@ export default function AppRoutes() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register/student" element={<StudentRegister />} />
           <Route path="/register/owner" element={<OwnerRegister />} />
+          <Route path="/payment/callback" element={<PaymentCallback />} />
           {/* Add a generic unauthorized page later if needed */}
         </Route>
 
@@ -51,6 +54,7 @@ export default function AppRoutes() {
             <Route index element={<Overview />} />
             <Route path="profile" element={<Profile />} />
             <Route path="bookings" element={<Bookings />} />
+            <Route path="payments" element={<Payments />} />
             <Route path="chat" element={<Chat />} />
             <Route path="saved" element={<SavedHostels />} />
             <Route path="visits" element={<Visits />} />

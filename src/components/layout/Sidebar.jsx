@@ -12,7 +12,8 @@ import {
     FaUser,
     FaHeart,
     FaStar,
-    FaChartLine
+    FaChartLine,
+    FaCreditCard
 } from 'react-icons/fa';
 
 export default function Sidebar() {
@@ -31,6 +32,7 @@ export default function Sidebar() {
         { name: 'My Bookings', path: '/dashboard/bookings', icon: FaCalendarAlt },
         { name: 'Saved Hostels', path: '/dashboard/saved', icon: FaHeart },
         { name: 'Scheduled Visits', path: '/dashboard/visits', icon: FaCalendarAlt },
+        { name: 'Payments', path: '/dashboard/payments', icon: FaCreditCard },
         { name: 'Chats', path: '/dashboard/chat', icon: FaComments },
     ];
 
@@ -41,6 +43,7 @@ export default function Sidebar() {
         { name: 'Rooms', path: '/dashboard/rooms', icon: FaBed },
         { name: 'Bookings', path: '/dashboard/bookings', icon: FaCalendarAlt },
         { name: 'Scheduled Visits', path: '/dashboard/visits', icon: FaCalendarAlt },
+        { name: 'Payments', path: '/dashboard/payments', icon: FaCreditCard },
         { name: 'Chats', path: '/dashboard/chat', icon: FaComments },
     ];
 
