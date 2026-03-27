@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../api/axios';
-import { FaStar, FaReply, FaTrash, FaMapMarkerAlt, FaUser } from 'react-icons/fa';
+import { FaStar, FaReply, FaTrash, FaMapMarkerAlt, FaUser, FaFlag } from 'react-icons/fa';
 
 export default function HostelReviews() {
     const { user } = useAuth();
@@ -61,13 +61,16 @@ export default function HostelReviews() {
         }
     };
 
-    const handleDeleteReview = async (reviewId) => {
-        if (!window.confirm('Are you sure? This will permanently delete the review.')) return;
+    const handleFlagReview = async (reviewId) => {
+        const reason = window.prompt('Please provide a reason for flagging this review (e.g., inappropriate language, fake review, spam):');
+        if (!reason) return;
+
         try {
-            await api.delete(`/reviews/${reviewId}`);
+            await api.patch(`/reviews/${reviewId}/flag`, { reason });
             fetchOwnerReviews();
+            alert('Review has been flagged for admin moderation.');
         } catch (err) {
-            alert('Failed to delete review');
+            alert(err.response?.data?.error || 'Failed to flag review');
         }
     };
 
@@ -194,14 +197,16 @@ export default function HostelReviews() {
                                         )}
                                     </div>
                                 </div>
-                                <div className="border-t md:border-t-0 md:border-l border-gray-50 pt-4 md:pt-0 md:pl-6 shrink-0 flex items-start">
+                                <div className="border-t md:border-t-0 md:border-l border-gray-50 pt-4 md:pt-0 md:pl-6 shrink-0 flex md:flex-col items-start gap-2">
                                     <button
-                                        onClick={() => handleDeleteReview(review.review_id)}
-                                        className="p-2 text-gray-300 hover:text-red-500 transition-colors"
-                                        title="Delete Review (Admin only or Owner/Student)"
+                                        onClick={() => handleFlagReview(review.review_id)}
+                                        className={`p-2 rounded-xl transition-colors ${review.is_flagged ? 'text-amber-500 bg-amber-50 cursor-default' : 'text-gray-300 hover:text-amber-500 hover:bg-amber-50'}`}
+                                        title={review.is_flagged ? 'Flagged for moderation' : 'Flag for Inappropriate Content'}
+                                        disabled={review.is_flagged}
                                     >
-                                        <FaTrash size={14} />
+                                        <FaFlag size={14} />
                                     </button>
+
                                 </div>
                             </div>
                         </div>
