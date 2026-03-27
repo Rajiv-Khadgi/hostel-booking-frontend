@@ -47,13 +47,30 @@ export default function Sidebar() {
         { name: 'Chats', path: '/dashboard/chat', icon: FaComments },
     ];
 
-    const links = user?.role === 'owner' ? ownerLinks : studentLinks;
+    const adminLinks = [
+        { name: 'Dashboard', path: '/dashboard', icon: FaChartLine },
+        { name: 'Manage Users', path: '/dashboard/admin/users', icon: FaUser },
+        { name: 'Manage Hostels', path: '/dashboard/admin/hostels', icon: FaBuilding },
+        { name: 'Manage Reviews', path: '/dashboard/admin/reviews', icon: FaStar },
+        { name: 'All Payments', path: '/dashboard/payments', icon: FaCreditCard },
+        { name: 'All Bookings', path: '/dashboard/bookings', icon: FaCalendarAlt },
+        { name: 'Chats', path: '/dashboard/chat', icon: FaComments },
+    ];
+
+    const getMenu = () => {
+        if (user?.role === 'admin') return { title: 'Admin Menu', links: adminLinks };
+        if (user?.role === 'owner') return { title: 'Owner Menu', links: ownerLinks };
+        return { title: 'Student Menu', links: studentLinks };
+    };
+
+    const menu = getMenu();
+    const links = menu.links;
 
     return (
         <div className="w-64 bg-white border-r border-gray-200 flex flex-col h-[calc(100vh-4rem)] sticky top-16">
             <div className="p-6">
                 <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-                    {user?.role === 'owner' ? 'Owner Menu' : 'Student Menu'}
+                    {menu.title}
                 </h2>
                 <nav className="space-y-1">
                     {links.map((link) => {
