@@ -12,6 +12,7 @@ import HostelDetails from '../pages/HostelDetails';
 import Login from '../pages/Login';
 import StudentRegister from '../pages/StudentRegister';
 import OwnerRegister from '../pages/OwnerRegister';
+import Unauthorized from '../pages/Unauthorized';
 
 // Dashboard Pages
 import Overview from '../pages/dashboard/Overview';
@@ -29,6 +30,9 @@ import HostelReviews from '../pages/dashboard/HostelReviews';
 import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
 import PaymentCallback from '../pages/payment/PaymentCallback';
+import AdminUsers from '../pages/dashboard/AdminUsers';
+import AdminHostels from '../pages/dashboard/AdminHostels';
+import AdminReviews from '../pages/dashboard/AdminReviews';
 
 export default function AppRoutes() {
   return (
@@ -45,6 +49,7 @@ export default function AppRoutes() {
           <Route path="/register/student" element={<StudentRegister />} />
           <Route path="/register/owner" element={<OwnerRegister />} />
           <Route path="/payment/callback" element={<PaymentCallback />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
           {/* Add a generic unauthorized page later if needed */}
         </Route>
 
@@ -68,6 +73,13 @@ export default function AppRoutes() {
               <Route path="rooms" element={<Rooms />} />
               <Route path="rooms/new" element={<RoomForm />} />
               <Route path="rooms/:id/edit" element={<RoomForm />} />
+            </Route>
+            
+            {/* Admin Only Routes */}
+            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+              <Route path="admin/users" element={<AdminUsers />} />
+              <Route path="admin/hostels" element={<AdminHostels />} />
+              <Route path="admin/reviews" element={<AdminReviews />} />
             </Route>
           </Route>
         </Route>

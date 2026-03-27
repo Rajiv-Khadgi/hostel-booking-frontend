@@ -38,9 +38,20 @@ export default function AdminUsers() {
     };
 
     const handleStatusUpdate = async (userId, newStatus) => {
+        if (newStatus === 'deleted' && !window.confirm('Are you sure you want to delete this user? This will deactivate their account.')) {
+            return;
+        }
+
         try {
             await api.patch(`/admin/users/${userId}/status`, { status: newStatus });
-            setUsers(users.map(u => u.user_id === userId ? { ...u, status: newStatus } : u));
+            
+            if (newStatus === 'deleted') {
+                // Remove from list if soft-deleted
+                setUsers(users.filter(u => u.user_id !== userId));
+            } else {
+                // Update status in place for suspension/activation
+                setUsers(users.map(u => u.user_id === userId ? { ...u, status: newStatus } : u));
+            }
         } catch (err) {
             alert('Failed to update status');
         }
