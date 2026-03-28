@@ -30,8 +30,8 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // If the error is 401 and we haven't already retried
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // If the error is 401, we haven't already retried, and it's not the login/refresh endpoint
+        if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== '/login' && !originalRequest.url?.includes('/register')) {
             originalRequest._retry = true;
             try {
                 // Attempt to refresh the token. backend has an endpoint for this
@@ -43,7 +43,8 @@ api.interceptors.response.use(
                 return api(originalRequest);
             } catch (refreshError) {
                 // Refresh failed, likely means the refresh token is expired or invalid
-                // Dispatch a custom event or redirect to login (often handled via Context or global Router)
+                // Set a user-friendly message before redirecting to login
+                localStorage.setItem('sessionExpiredMessage', 'Your session has expired. Please log in again to continue.');
                 window.dispatchEvent(new Event('unauthorized'));
                 return Promise.reject(refreshError);
             }

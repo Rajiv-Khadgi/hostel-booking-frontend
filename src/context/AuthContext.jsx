@@ -44,6 +44,11 @@ export const AuthProvider = ({ children }) => {
         return data;
     };
 
+    const requestRegisterOtp = async (email) => {
+        const { data } = await api.post('/register-request', { email });
+        return data;
+    };
+
     const registerStudent = async (studentData) => {
         const { data } = await api.post('/register/student', studentData);
         if (data.accessToken) {
@@ -78,7 +83,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, registerStudent, registerOwner, updateUser }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, registerStudent, registerOwner, updateUser, requestRegisterOtp }}>
             {!loading && children}
         </AuthContext.Provider>
     );
