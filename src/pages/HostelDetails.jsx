@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import api from '../api/axios';
 import { FaComments, FaCalendarAlt } from 'react-icons/fa';
+import MapComponent from '../components/MapComponent';
 
 export default function HostelDetails() {
     const { id } = useParams();
@@ -291,6 +292,17 @@ export default function HostelDetails() {
                                     <FaComments className="w-5 h-5" />
                                     Chat with Owner
                                 </button>
+                                <a
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${hostel.latitude},${hostel.longitude}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-sm"
+                                >
+                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                    </svg>
+                                    Get Directions
+                                </a>
                                 <button
                                     onClick={handleToggleSave}
                                     className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all border ${isSaved
@@ -340,12 +352,18 @@ export default function HostelDetails() {
                     <div className="lg:col-span-2 space-y-8">
                         <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
                             <h2 className="text-2xl font-bold text-gray-900 mb-4">About this property</h2>
-                            <div className="prose prose-emerald max-w-none text-gray-600 leading-relaxed">
+                            <div className="prose prose-emerald max-w-none text-gray-600 leading-relaxed mb-8">
                                 {hostel.description ? (
                                     <p className="whitespace-pre-line">{hostel.description}</p>
                                 ) : (
                                     <p className="italic text-gray-400">No description provided by the owner.</p>
                                 )}
+                            </div>
+                            
+                            {/* Map Location */}
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-900 mb-4">Location</h3>
+                                <MapComponent singleHostel={hostel} zoom={15} />
                             </div>
                         </section>
 

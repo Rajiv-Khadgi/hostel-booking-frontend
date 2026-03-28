@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import MapComponent from '../components/MapComponent';
 
 export default function Explore() {
     const [hostels, setHostels] = useState([]);
@@ -9,6 +10,13 @@ export default function Explore() {
     const [search, setSearch] = useState('');
     const [city, setCity] = useState('');
     const [savedIds, setSavedIds] = useState(new Set());
+    
+    // Near me state
+    const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
+    const [radius, setRadius] = useState(5); // Default 5 km
+    const [isNearMe, setIsNearMe] = useState(false);
+    const [userLoc, setUserLoc] = useState(null);
+
     const { user } = api.defaults.headers.common['Authorization'] ? { user: true } : { user: null }; // Simplified check for user status or useAuth if available
 
     useEffect(() => {
@@ -31,6 +39,7 @@ export default function Explore() {
     const fetchHostels = async () => {
         try {
             setLoading(true);
+            setIsNearMe(false); // Reset near me state for standard searches
 
             // Build query string
             const params = new URLSearchParams();
@@ -45,6 +54,58 @@ export default function Explore() {
             setLoading(false);
         }
     };
+
+    const fetchNearbyHostels = async (lat, lng, rad) => {
+        try {
+            setLoading(true);
+            const response = await api.get(`/hostels/nearby?lat=${lat}&lng=${lng}&radius=${rad}`);
+            setHostels(response.data.hostels || []);
+            setError('');
+        } catch (err) {
+            setError(err.response?.data?.error || 'Failed to fetch nearby hostels');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleNearMe = () => {
+        if (isNearMe) {
+            // User wants to cancel "Near Me" search
+            setIsNearMe(false);
+            setUserLoc(null);
+            setViewMode('list');
+            fetchHostels(); // Re-fetch all normal hostels
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            setError('Geolocation is not supported by your browser');
+            return;
+        }
+        setLoading(true);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setUserLoc({ lat: latitude, lng: longitude });
+                setIsNearMe(true);
+                setViewMode('map');
+                setSearch('');
+                setCity('');
+                fetchNearbyHostels(latitude, longitude, radius);
+            },
+            (err) => {
+                setError('Location access denied or unavailable. Please enable location services.');
+                setLoading(false);
+            }
+        );
+    };
+
+    // Re-fetch if radius changes and we are in near me mode
+    useEffect(() => {
+        if (isNearMe && userLoc) {
+            fetchNearbyHostels(userLoc.lat, userLoc.lng, radius);
+        }
+    }, [radius]);
 
     const handleToggleSave = async (e, id) => {
         e.preventDefault();
@@ -103,7 +164,8 @@ export default function Explore() {
                                 placeholder="Search by name or area..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="block w-full pl-11 pr-4 py-3 border-transparent bg-transparent focus:ring-0 focus:border-transparent text-gray-900 placeholder-gray-500 rounded-xl"
+                                className="block w-full pl-11 pr-4 py-3 border-transparent bg-transparent focus:ring-0 focus:border-transparent text-gray-900 placeholder-gray-500 rounded-xl disabled:bg-gray-50"
+                                disabled={isNearMe}
                             />
                         </div>
                         <div className="hidden sm:block w-px bg-gray-200 my-2"></div>
@@ -119,16 +181,60 @@ export default function Explore() {
                                 placeholder="City"
                                 value={city}
                                 onChange={(e) => setCity(e.target.value)}
-                                className="block w-full pl-11 pr-4 py-3 border-transparent bg-transparent focus:ring-0 focus:border-transparent text-gray-900 placeholder-gray-500 rounded-xl"
+                                className="block w-full pl-11 pr-4 py-3 border-transparent bg-transparent focus:ring-0 focus:border-transparent text-gray-900 placeholder-gray-500 rounded-xl disabled:bg-gray-50"
+                                disabled={isNearMe}
                             />
                         </div>
                         <button
                             type="submit"
-                            className="w-full sm:w-auto bg-emerald-600 text-white font-medium px-8 py-3 rounded-xl shadow-sm hover:bg-emerald-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+                            disabled={isNearMe}
+                            className="w-full sm:w-auto bg-emerald-600 text-white font-medium px-8 py-3 rounded-xl shadow-sm hover:bg-emerald-700 transition-colors disabled:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
                         >
                             Search
                         </button>
                     </form>
+
+                    {/* Near Me Tools */}
+                    <div className="max-w-3xl mx-auto mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20">
+                        <button
+                            onClick={handleNearMe}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all ${isNearMe ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white/20 text-white hover:bg-white/30'}`}
+                        >
+                            {isNearMe ? (
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            ) : (
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            )}
+                            {isNearMe ? 'Cancel Nearby Search' : 'Search Near Me'}
+                        </button>
+
+                        {isNearMe && (
+                            <div className="flex-1 flex items-center gap-4 bg-white/95 backdrop-blur-md px-4 py-2 rounded-xl border border-emerald-800/20 shadow-xl overflow-hidden min-w-[300px]">
+                                <span className="text-emerald-900 font-bold whitespace-nowrap drop-shadow-sm flex items-center gap-2">
+                                     <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Radius:
+                                </span>
+                                <input
+                                    type="range"
+                                    min="1"
+                                    max="50"
+                                    value={radius}
+                                    onChange={(e) => setRadius(parseInt(e.target.value))}
+                                    className="flex-1 h-2 bg-emerald-200 rounded-lg appearance-none cursor-pointer accent-emerald-600 transition-all hover:accent-emerald-500"
+                                />
+                                <span className="font-extrabold text-emerald-700 bg-emerald-100/80 px-3 py-1 rounded-lg min-w-[60px] text-center shadow-inner border border-emerald-200/50">
+                                    {radius} km
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -152,9 +258,31 @@ export default function Explore() {
                             </svg>
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">No hostels found</h3>
-                        <p className="text-gray-500">Try adjusting your search criteria or location to find more results.</p>
+                        <p className="text-gray-500">Try adjusting your search criteria, location, or increasing the search radius.</p>
+                        
+                        {isNearMe && viewMode === 'map' && userLoc && (
+                            <div className="mt-8 mb-4 max-w-2xl mx-auto h-[400px] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
+                                <MapComponent 
+                                    hostels={[]} 
+                                    center={[userLoc.lat, userLoc.lng]}
+                                    userLocation={userLoc}
+                                    zoom={14}
+                                    height="100%"
+                                />
+                                <div className="absolute top-4 left-4 z-[400] bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-md font-bold text-red-600 text-sm border border-red-100">
+                                    No properties within {radius} km
+                                </div>
+                            </div>
+                        )}
+
                         <button
-                            onClick={() => { setSearch(''); setCity(''); }}
+                            onClick={() => { 
+                                setSearch(''); 
+                                setCity(''); 
+                                setIsNearMe(false);
+                                setViewMode('list');
+                                fetchHostels(); // Re-fetch all
+                            }}
                             className="mt-6 inline-flex items-center px-4 py-2 border border-emerald-200 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
                         >
                             Clear Filters
@@ -164,9 +292,41 @@ export default function Explore() {
                     <div>
                         <div className="flex justify-between items-center mb-6 px-2">
                             <h2 className="text-lg font-bold text-emerald-900">{hostels.length} {hostels.length === 1 ? 'Property' : 'Properties'} Available</h2>
+                            
+                            {/* View Toggle */}
+                            <div className="flex bg-gray-200 rounded-lg p-1">
+                                <button 
+                                    onClick={() => setViewMode('list')}
+                                    className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${viewMode === 'list' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    List View
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode('map')}
+                                    className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${viewMode === 'map' ? 'bg-white text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Map View
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                        {viewMode === 'map' ? (
+                            <div className="w-full h-[600px] bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden relative">
+                                <MapComponent 
+                                    hostels={hostels} 
+                                    center={userLoc ? [userLoc.lat, userLoc.lng] : [27.7172, 85.3240]} // Use user location or default
+                                    userLocation={userLoc}
+                                    zoom={14}
+                                    height="100%"
+                                />
+                                {isNearMe && (
+                                    <div className="absolute top-4 left-4 z-[400] bg-white/90 backdrop-blur px-4 py-2 rounded-lg shadow-md font-bold text-emerald-800 text-sm border border-emerald-100">
+                                        Showing properties within {radius} km
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                             {hostels.map((hostel) => (
                                 <Link to={`/hostels/${hostel.hostel_id}`} key={hostel.hostel_id} className="group flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
 
@@ -250,6 +410,7 @@ export default function Explore() {
                                 </Link>
                             ))}
                         </div>
+                        )}
                     </div>
                 )}
             </div>
