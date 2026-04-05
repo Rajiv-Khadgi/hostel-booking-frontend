@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../api/axios';
 import { FaUserCircle } from 'react-icons/fa';
+import { FiMenu } from 'react-icons/fi';
 
-export default function Navbar() {
+export default function Navbar({ onMenuToggle }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleLogout = async () => {
     await logout();
@@ -21,11 +23,35 @@ export default function Navbar() {
     return `https://ui-avatars.com/api/?name=${user?.first_name}+${user?.last_name}&background=10b981&color=fff&size=50`;
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dropdownOpen]);
+
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-100 z-50 relative">
+    <nav className="fixed top-0 left-0 right-0 bg-white shadow-sm border-b border-gray-100 z-50">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            {/* Mobile hamburger — only rendered when a toggle handler is provided (DashboardLayout) */}
+            {onMenuToggle && (
+              <button
+                className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                onClick={onMenuToggle}
+                aria-label="Toggle menu"
+              >
+                <FiMenu className="w-5 h-5" />
+              </button>
+            )}
+
             <Link to="/" className="shrink-0 flex items-center gap-2 group">
               <div className="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm group-hover:bg-emerald-700 transition-colors">
                 H
@@ -42,9 +68,10 @@ export default function Navbar() {
               </Link>
             </div>
           </div>
+
           <div className="flex items-center gap-4">
             {user ? (
-              <div className="relative">
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="flex items-center gap-2.5 text-gray-700 hover:text-emerald-600 transition-colors focus:outline-none"
