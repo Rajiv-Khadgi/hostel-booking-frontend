@@ -7,7 +7,7 @@ import api from '../api/axios';
  * @param {string} entityType - 'hostels' or 'rooms'
  * @param {string|number} entityId - The ID of the hostel or room
  */
-export default function ImageManager({ entityType, entityId }) {
+export default function ImageManager({ entityType, entityId, maxImages }) {
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
@@ -79,6 +79,15 @@ export default function ImageManager({ entityType, entityId }) {
         }
     };
 
+    const handleSetCover = async (imageId) => {
+        try {
+            const res = await api.put(`/${entityType}/${entityId}/images/${imageId}/set-cover`);
+            setImages(res.data.images);
+        } catch (err) {
+            alert('Failed to set cover image.');
+        }
+    };
+
     if (loading) {
         return <div className="p-8 text-center text-gray-500 animate-pulse">Loading images...</div>;
     }
@@ -87,7 +96,7 @@ export default function ImageManager({ entityType, entityId }) {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mt-8">
             <div className="px-6 py-5 border-b border-gray-100">
                 <h3 className="text-lg font-medium text-gray-900">Manage Photos</h3>
-                <p className="text-sm text-gray-500 mt-1">First photo acts as the cover image.</p>
+                {entityType === 'hostels' && <p className="text-sm text-gray-500 mt-1">First photo acts as the cover image.</p>}
             </div>
 
             <div className="p-6">
@@ -99,7 +108,17 @@ export default function ImageManager({ entityType, entityId }) {
                         {images.map((img) => (
                             <div key={img.image_id} className="relative group h-32 w-full rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
                                 <img src={api.defaults.baseURL.replace('/api', '') + img.image_url} alt="Property setup" className="object-cover w-full h-full" />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                {img.is_cover && <span className="absolute top-2 left-2 bg-emerald-600/90 px-2 py-0.5 rounded text-[10px] uppercase font-bold text-white shadow-sm pointer-events-none z-10">COVER</span>}
+                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 gap-2">
+                                    {entityType === 'hostels' && !img.is_cover && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.preventDefault(); handleSetCover(img.image_id); }}
+                                            className="bg-emerald-500 text-white px-3 py-1 text-xs rounded-full hover:bg-emerald-600 shadow-md transform scale-90 group-hover:scale-100 transition-all font-medium"
+                                        >
+                                            Set as Cover
+                                        </button>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={(e) => { e.preventDefault(); handleDelete(img.image_id); }}
@@ -118,33 +137,35 @@ export default function ImageManager({ entityType, entityId }) {
                 )}
 
                 {/* Dropzone */}
-                <div
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={handleDrop}
-                    className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-gray-50 hover:border-emerald-400 transition-colors cursor-pointer"
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <svg className="mx-auto h-10 w-10 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p className="text-sm font-medium text-gray-900">Click to upload or drag and drop</p>
-                    <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
-                    <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        className="hidden"
-                        ref={fileInputRef}
-                        onChange={handleFileSelect}
-                    />
+                {(!maxImages || images.length < maxImages) && (
+                    <div
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={handleDrop}
+                        className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-gray-50 hover:border-emerald-400 transition-colors cursor-pointer"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <svg className="mx-auto h-10 w-10 text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="text-sm font-medium text-gray-900">Click to upload or drag and drop</p>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                        <input
+                            type="file"
+                            multiple={!maxImages || maxImages > 1}
+                            accept="image/*"
+                            className="hidden"
+                            ref={fileInputRef}
+                            onChange={handleFileSelect}
+                        />
 
-                    {uploading && (
-                        <div className="mt-4 flex flex-col items-center">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-600 mb-2"></div>
-                            <span className="text-xs text-emerald-600 font-medium">Uploading images...</span>
-                        </div>
-                    )}
-                </div>
+                        {uploading && (
+                            <div className="mt-4 flex flex-col items-center">
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-600 mb-2"></div>
+                                <span className="text-xs text-emerald-600 font-medium">Uploading images...</span>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

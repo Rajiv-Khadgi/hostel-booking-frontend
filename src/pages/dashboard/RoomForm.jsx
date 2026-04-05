@@ -42,6 +42,9 @@ export default function RoomForm() {
     const [serverError, setServerError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [initialLoading, setInitialLoading] = useState(true);
+    
+    const [selectedImage, setSelectedImage] = useState(null);
+    const fileInputRef = React.useRef(null);
 
     useEffect(() => {
         const init = async () => {
@@ -88,6 +91,17 @@ export default function RoomForm() {
         }
     };
 
+    const handleImageChange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setSelectedImage(e.target.files[0]);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handleRemoveImage = () => {
+        setSelectedImage(null);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setServerError('');
@@ -104,7 +118,20 @@ export default function RoomForm() {
             if (isEditMode) {
                 await api.put(`/rooms/${id}`, formData);
             } else {
-                await api.post('/rooms', formData);
+                const res = await api.post('/rooms', formData);
+                const newRoomId = res.data.room?.room_id || res.data.room?.id;
+                
+                if (newRoomId && selectedImage) {
+                    const imgFormData = new FormData();
+                    imgFormData.append('images', selectedImage);
+                    try {
+                        await api.post(`/rooms/${newRoomId}/images`, imgFormData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+                    } catch (imgError) {
+                        console.error('Failed to upload initial image', imgError);
+                    }
+                }
             }
 
             navigate('/dashboard/rooms');
@@ -271,6 +298,46 @@ export default function RoomForm() {
                                 placeholder="E.g., Attached bathroom, south facing window..."
                             ></textarea>
                         </div>
+                        
+                        {!isEditMode && (
+                            <div className="pt-4 border-t border-gray-100">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Room Photo <span className="text-gray-400 font-normal">(Single Image for this Room Type)</span></label>
+                                {selectedImage ? (
+                                    <div className="relative group h-40 w-full sm:w-64 rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
+                                        <img src={URL.createObjectURL(selectedImage)} alt="Preview" className="object-cover w-full h-full" />
+                                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveImage}
+                                                className="bg-red-500 text-white p-2 text-sm rounded-full hover:bg-red-600 shadow-md transform scale-90 group-hover:scale-100 transition-all"
+                                            >
+                                                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div
+                                        className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 hover:border-emerald-400 transition-colors cursor-pointer w-full sm:w-64"
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <p className="text-sm font-medium text-gray-900">Upload Room Photo</p>
+                                        <p className="text-xs text-gray-500 mt-1">Select one distinct image</p>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            ref={fileInputRef}
+                                            onChange={handleImageChange}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     <div className="pt-6 border-t border-gray-100 flex justify-end gap-3">
@@ -292,7 +359,7 @@ export default function RoomForm() {
             </div>
 
             {isEditMode && (
-                <ImageManager entityType="rooms" entityId={id} />
+                <ImageManager entityType="rooms" entityId={id} maxImages={1} />
             )}
         </div>
     );
