@@ -15,10 +15,11 @@ export default function Overview() {
         try {
             setLoading(true);
             const res = await api.get('/dashboard/stats');
+            console.log('Dashboard API Response:', res.data);
             setStats(res.data.stats);
         } catch (err) {
             setError('Failed to load dashboard statistics');
-            console.error(err);
+            console.error('Dashboard Error:', err);
         } finally {
             setLoading(false);
         }
@@ -42,9 +43,9 @@ export default function Overview() {
         );
     }
 
-    if (!stats) return (
+    if (!stats || !stats.metrics) return (
         <div className="flex flex-col items-center justify-center h-96 text-gray-400">
-             <p>No data available yet.</p>
+            <p>No data available yet.</p>
         </div>
     );
 

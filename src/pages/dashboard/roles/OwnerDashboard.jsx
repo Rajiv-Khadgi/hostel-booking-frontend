@@ -1,100 +1,184 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import StatCard from '../../../components/dashboard/StatCard';
-import { RevenueAreaChart, RoomTypeDonutChart } from '../../../components/dashboard/AnalyticsCharts';
-import { FaWallet, FaChartLine, FaCalendarCheck, FaRegClock, FaHeart } from 'react-icons/fa';
+import { EnhancedAreaChart, RevenueBreakdownChart, BookingStatusChart, PerformanceRadarChart, TopPerformersChart } from '../../../components/dashboard/RechartsComponents';
+import { ComparisonCard, GoalProgressCard, InsightCard, PerformanceMetric } from '../../../components/dashboard/PerformanceIndicators';
+import { FaWallet, FaChartLine, FaCalendarCheck, FaRegClock, FaHeart, FaLightbulb, FaFire } from 'react-icons/fa';
 
 export default function OwnerDashboard({ stats }) {
+    if (!stats || !stats.metrics || !stats.charts) {
+        return <div className="text-center py-12 text-gray-400">Loading dashboard data...</div>;
+    }
+
+    const { metrics = {}, charts = {} } = stats;
+
+    const formatChartData = useMemo(() => {
+        if (!charts.revenueTrend) return [];
+        return charts.revenueTrend.map(d => ({
+            name: new Date(d.month).toLocaleDateString('default', { month: 'short', year: '2-digit' }),
+            total: Number(d.total || 0)
+        }));
+    }, [charts.revenueTrend]);
+
+    const bookingStatusData = useMemo(() => {
+        if (!charts.bookingStatus) return [];
+        return charts.bookingStatus.map(item => ({
+            status: item.status || 'Unknown',
+            count: Number(item.count || 0)
+        }));
+    }, [charts.bookingStatus]);
+
+    const topRoomsData = useMemo(() => {
+        if (!charts.revenueByRoom) return [];
+        return charts.revenueByRoom.map((item, idx) => ({
+            name: item['room.room_type'] || `Room Type ${idx + 1}`,
+            total: Number(item.total || 0)
+        }));
+    }, [charts.revenueByRoom]);
+
+    const insightMessage = (metrics.occupancyRate || 0) > 80
+        ? "Your occupancy is excellent! Consider premium pricing for peak seasons."
+        : (metrics.occupancyRate || 0) > 50
+            ? "Good occupancy rate. Try offering special discounts mid-week to boost it further."
+            : "Low occupancy. Consider marketing campaigns or dynamic pricing strategies.";
+
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
-            {/* Bento Grid Stats */}
+            {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard 
-                    title="Total Earnings" 
-                    value={`Rs. ${stats.metrics.totalEarnings.toLocaleString()}`} 
-                    icon={FaWallet} 
-                    color="emerald" 
-                    trendValue={stats.metrics.revenueGrowth} 
+                <StatCard
+                    title="Total Earnings"
+                    value={`Rs. ${(metrics.totalEarnings || 0).toLocaleString()}`}
+                    icon={FaWallet}
+                    color="emerald"
+                    trendValue={metrics.revenueGrowth}
                 />
-                <StatCard 
-                    title="Occupancy Rate" 
-                    value={`${stats.metrics.occupancyRate}%`} 
-                    icon={FaChartLine} 
-                    color="blue" 
+                <StatCard
+                    title="Occupancy Rate"
+                    value={`${metrics.occupancyRate || 0}%`}
+                    icon={FaChartLine}
+                    color="blue"
                 />
-                <StatCard 
-                    title="Active Bookings" 
-                    value={stats.metrics.activeBookings} 
-                    icon={FaCalendarCheck} 
-                    color="indigo" 
+                <StatCard
+                    title="Active Bookings"
+                    value={metrics.activeBookings || 0}
+                    icon={FaCalendarCheck}
+                    color="indigo"
                 />
-                <StatCard 
-                    title="Pending Requests" 
-                    value={stats.metrics.pendingRequests} 
-                    icon={FaRegClock} 
-                    color="amber" 
+                <StatCard
+                    title="Pending Requests"
+                    value={metrics.pendingRequests || 0}
+                    icon={FaRegClock}
+                    color="amber"
                 />
             </div>
 
-            {/* Main Analytics Row */}
+            {/* Analytics Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Revenue Trend - Spans 2 columns */}
+                {/* Revenue Analysis */}
                 <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h3 className="text-xl font-black text-gray-900 tracking-tight">Revenue Analysis</h3>
-                            <p className="text-sm text-gray-400 font-medium">Monthly performance overview (NPR)</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                             <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                             <span className="text-xs font-bold text-gray-500 uppercase">Growth Plan</span>
-                        </div>
+                    <div className="mb-8">
+                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Revenue Analysis</h3>
+                        <p className="text-sm text-gray-400 font-medium">Monthly performance (Last 6 months)</p>
                     </div>
                     <div className="h-[300px]">
-                        <RevenueAreaChart data={stats.charts.revenueTrend} />
+                        <EnhancedAreaChart data={formatChartData} color="#10b981" dataKey="total" />
                     </div>
                 </div>
 
-                {/* Room Distribution - Spans 1 column */}
+                {/* Performance Radar */}
                 <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                    <h3 className="text-xl font-black text-gray-900 tracking-tight mb-8">Room Types</h3>
-                    <div className="h-[300px] flex items-center justify-center">
-                        <RoomTypeDonutChart data={stats.charts.roomTypeDistribution} />
+                    <h3 className="text-xl font-black text-gray-900 tracking-tight mb-8">Performance Metrics</h3>
+                    <div className="h-[300px]">
+                        <PerformanceRadarChart data={metrics} />
                     </div>
                 </div>
             </div>
 
-            {/* Bottom Row - Rating & Meta */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="md:col-span-1 bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-[2.5rem] text-white shadow-lg overflow-hidden relative group">
+            {/* Revenue & Booking Status */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Revenue by Room Type */}
+                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                    <h3 className="text-xl font-black text-gray-900 tracking-tight mb-8">Revenue by Room Type</h3>
+                    <div className="h-[300px]">
+                        <RevenueBreakdownChart data={charts.revenueByRoom || []} />
+                    </div>
+                </div>
+
+                {/* Booking Status */}
+                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                    <h3 className="text-xl font-black text-gray-900 tracking-tight mb-8">Booking Status</h3>
+                    <div className="h-[300px]">
+                        <BookingStatusChart data={bookingStatusData} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Performance Indicators */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <PerformanceMetric
+                    label="Booking Conversion"
+                    value={metrics.conversionRate || 0}
+                    unit="%"
+                    icon={FaFire}
+                />
+                <ComparisonCard
+                    title="Revenue Growth"
+                    current={Math.max(0, Math.round((metrics.totalEarnings || 0) * (metrics.revenueGrowth || 0) / 100))}
+                    previous={Math.max(0, Math.round((metrics.totalEarnings || 0) / (1 + (metrics.revenueGrowth || 0) / 100)))}
+                    unit="Rs. "
+                    trend={metrics.revenueGrowth || 0}
+                />
+            </div>
+
+            {/* Room Statistics */}
+            {topRoomsData.length > 0 && (
+                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                    <h3 className="text-xl font-black text-gray-900 tracking-tight mb-6">Top Performing Room Types</h3>
+                    <TopPerformersChart data={topRoomsData} />
+                </div>
+            )}
+
+            {/* Goal Progress & Rating */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <GoalProgressCard
+                    title="Occupancy Goal"
+                    current={metrics.occupancyRate || 0}
+                    target={85}
+                    unit="%"
+                    category="occupancy"
+                />
+
+                <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-[2.5rem] text-white shadow-lg overflow-hidden relative group">
+                    <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition-transform" />
                     <div className="relative z-10">
-                        <FaHeart className="text-white/20 absolute -right-4 -top-4" size={120} />
-                        <h3 className="text-lg font-bold opacity-80 uppercase tracking-widest text-sm">Average Rating</h3>
-                        <p className="text-6xl font-black mt-2 tracking-tighter">{stats.metrics.averageRating}</p>
+                        <div className="flex items-center gap-2 mb-4 text-indigo-100">
+                            <FaHeart size={16} />
+                            <span className="text-xs font-bold uppercase tracking-widest">Average Rating</span>
+                        </div>
+                        <p className="text-5xl font-black text-white mb-2">{(metrics.averageRating || 0).toFixed(1)}</p>
                         <div className="flex gap-1 mt-4">
                             {[...Array(5)].map((_, i) => (
-                                <FaHeart 
-                                    key={i} 
-                                    className={`${i < Math.round(stats.metrics.averageRating) ? 'text-white' : 'text-white/30'}`} 
-                                    size={16} 
+                                <FaHeart
+                                    key={i}
+                                    className={i < Math.round(metrics.averageRating || 0) ? 'text-white' : 'text-white/30'}
+                                    size={16}
                                 />
                             ))}
                         </div>
-                        <p className="text-sm mt-6 font-medium text-white/70">Based on recent customer reviews</p>
+                        <p className="text-indigo-100 text-sm mt-4 font-medium">Based on guest reviews</p>
                     </div>
-                    {/* Decorative glass circle */}
-                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700" />
-                </div>
-
-                <div className="md:col-span-2 bg-emerald-50/50 border border-emerald-100 p-8 rounded-[2.5rem] flex flex-col justify-center">
-                    <h3 className="text-xl font-black text-emerald-900 mb-2">Smart Insights</h3>
-                    <p className="text-emerald-700 leading-relaxed font-medium">
-                        Your occupancy rate is <span className="font-black underline">{stats.metrics.occupancyRate}%</span>. 
-                        {stats.metrics.occupancyRate > 80 
-                            ? " Consider increasing prices for premium rooms to maximize revenue." 
-                            : " Try offering mid-week discounts to boost bookings!"}
-                    </p>
                 </div>
             </div>
+
+            {/* Smart Insights */}
+            <InsightCard
+                title="Occupancy Intelligence"
+                description="AI-Powered Recommendations"
+                value={`${metrics.occupancyRate || 0}% Occupancy`}
+                trend={metrics.revenueGrowth || 0}
+                icon={FaLightbulb}
+                recommendation={insightMessage}
+            />
         </div>
     );
 }

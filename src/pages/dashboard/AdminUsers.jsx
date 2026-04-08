@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api/axios';
+import toast from 'react-hot-toast';
+import Pagination from '../../components/common/Pagination';
+import SearchBar from '../../components/common/SearchBar';
+import ConfirmModal from '../../components/common/ConfirmModal';
+import { getFriendlyErrorMessage } from '../../utils/errorUtils';
 import { 
     FaUser, 
     FaTrash, 
     FaUserSlash, 
     FaUserCheck, 
-    FaSearch, 
     FaFilter,
     FaEnvelope,
-    FaPhone
+    FaPhone,
 } from 'react-icons/fa';
 
 export default function AdminUsers() {
@@ -17,10 +21,14 @@ export default function AdminUsers() {
     const [search, setSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [error, setError] = useState('');
+    const [page, setPage] = useState(1);
+    const [confirmAction, setConfirmAction] = useState({ isOpen: false, userId: null, status: null });
+    const PAGE_SIZE = 10;
 
     useEffect(() => {
+        setPage(1);
         fetchUsers();
-    }, [roleFilter]);
+    }, [roleFilter, search]);
 
     const fetchUsers = async () => {
         try {
@@ -37,23 +45,26 @@ export default function AdminUsers() {
         }
     };
 
-    const handleStatusUpdate = async (userId, newStatus) => {
-        if (newStatus === 'deleted' && !window.confirm('Are you sure you want to delete this user? This will deactivate their account.')) {
-            return;
-        }
+    // Filter search locally if needed or rely entirely on backend. 
+    // The backend handles 'search', so `users` is already filtered by search and role.
+    const totalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
+    const paginatedUsers = users.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+    const handleStatusUpdate = async (userId, newStatus) => {
         try {
             await api.patch(`/admin/users/${userId}/status`, { status: newStatus });
             
             if (newStatus === 'deleted') {
-                // Remove from list if soft-deleted
                 setUsers(users.filter(u => u.user_id !== userId));
+                toast.success('User deleted successfully');
             } else {
-                // Update status in place for suspension/activation
                 setUsers(users.map(u => u.user_id === userId ? { ...u, status: newStatus } : u));
+                toast.success(`User ${newStatus} successfully`);
             }
         } catch (err) {
-            alert('Failed to update status');
+            toast.error(getFriendlyErrorMessage(err, 'Failed to update status'));
+        } finally {
+            setConfirmAction({ isOpen: false, userId: null, status: null });
         }
     };
 
@@ -74,19 +85,12 @@ export default function AdminUsers() {
             </div>
 
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                <div className="relative flex-1 max-w-md w-full">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                        <FaSearch size={14} />
-                    </span>
-                    <input
-                        type="text"
-                        placeholder="Search by name or email..."
-                        className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm transition-all shadow-sm"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && fetchUsers()}
-                    />
-                </div>
+                <SearchBar 
+                    value={search} 
+                    onChange={setSearch} 
+                    placeholder="Search by name or email..." 
+                    className="flex-1 max-w-md w-full"
+                />
 
                 <div className="flex items-center gap-2 bg-white p-1 border border-gray-200 rounded-xl shadow-sm">
                     <button 
@@ -124,7 +128,7 @@ export default function AdminUsers() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-100">
-                                {users.map((u) => (
+                                {paginatedUsers.map((u) => (
                                     <tr key={u.user_id} className="hover:bg-gray-50/50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
@@ -181,7 +185,7 @@ export default function AdminUsers() {
                                                     </button>
                                                 )}
                                                 <button 
-                                                    onClick={() => u.status !== 'deleted' && handleStatusUpdate(u.user_id, 'deleted')}
+                                                    onClick={() => u.status !== 'deleted' && setConfirmAction({ isOpen: true, userId: u.user_id, status: 'deleted' })}
                                                     className={`p-2 rounded-lg transition-colors ${u.status === 'deleted' ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:bg-red-50'}`}
                                                     title="Mark as Deleted"
                                                 >
@@ -196,6 +200,27 @@ export default function AdminUsers() {
                     </div>
                 </div>
             )}
+
+            {/* Pagination Controls */}
+            {!loading && !error && (
+                <Pagination 
+                    page={page} 
+                    totalPages={totalPages} 
+                    totalItems={users.length} 
+                    pageSize={PAGE_SIZE} 
+                    onPageChange={setPage} 
+                />
+            )}
+
+            <ConfirmModal
+                isOpen={confirmAction.isOpen}
+                onClose={() => setConfirmAction({ isOpen: false, userId: null, status: null })}
+                onConfirm={() => handleStatusUpdate(confirmAction.userId, confirmAction.status)}
+                title="Delete User"
+                message="Are you sure you want to delete this user? This will deactivate their account."
+                confirmText="Delete"
+                variant="danger"
+            />
         </div>
     );
 }

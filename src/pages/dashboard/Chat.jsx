@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../api/axios';
+import toast from 'react-hot-toast';
 import { socket, connectSocket, disconnectSocket } from '../../utils/socket';
+import { getFriendlyErrorMessage } from '../../utils/errorUtils';
 import { FaPaperPlane, FaPaperclip, FaSearch, FaEllipsisV, FaCircle, FaFilePdf, FaFileWord, FaFileAlt, FaDownload, FaCheck, FaCheckDouble } from 'react-icons/fa';
 
 export default function Chat() {
@@ -178,8 +180,7 @@ export default function Chat() {
 
             socket.emit('send_message', messageData);
         } catch (err) {
-            console.error('Upload failed', err);
-            alert('Failed to upload file');
+            toast.error(getFriendlyErrorMessage(err, 'Failed to upload file'));
         } finally {
             setUploading(false);
         }

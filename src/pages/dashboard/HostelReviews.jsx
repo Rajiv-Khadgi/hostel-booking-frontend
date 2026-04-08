@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../api/axios';
-import { FaStar, FaReply, FaTrash, FaMapMarkerAlt, FaUser, FaFlag } from 'react-icons/fa';
+import toast from 'react-hot-toast';
+import Pagination from '../../components/common/Pagination';
+import SearchBar from '../../components/common/SearchBar';
+import InputModal from '../../components/common/InputModal';
+import { getFriendlyErrorMessage } from '../../utils/errorUtils';
+import { FaStar, FaReply, FaTrash, FaMapMarkerAlt, FaUser, FaFlag, FaSearch } from 'react-icons/fa';
 
 export default function HostelReviews() {
     const { user } = useAuth();
@@ -11,6 +16,12 @@ export default function HostelReviews() {
     const [replyingTo, setReplyingTo] = useState(null);
     const [replyText, setReplyText] = useState('');
     const [submittingReply, setSubmittingReply] = useState(false);
+    const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const [flagModal, setFlagModal] = useState({ isOpen: false, reviewId: null });
+    const PAGE_SIZE = 10;
+
+    useEffect(() => { setPage(1); }, [search]);
 
     useEffect(() => {
         fetchOwnerReviews();
@@ -53,25 +64,42 @@ export default function HostelReviews() {
             setReplyingTo(null);
             setReplyText('');
             fetchOwnerReviews();
-            alert('Reply posted successfully!');
+            toast.success('Reply posted successfully!');
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to post reply');
+            toast.error(getFriendlyErrorMessage(err, 'Failed to post reply'));
         } finally {
             setSubmittingReply(false);
         }
     };
 
-    const handleFlagReview = async (reviewId) => {
-        const reason = window.prompt('Please provide a reason for flagging this review (e.g., inappropriate language, fake review, spam):');
-        if (!reason) return;
-
+    const handleFlagReview = async (reviewId, reason) => {
         try {
             await api.patch(`/reviews/${reviewId}/flag`, { reason });
             fetchOwnerReviews();
-            alert('Review has been flagged for admin moderation.');
+            toast.success('Review has been flagged for moderation.');
+            setFlagModal({ isOpen: false, reviewId: null });
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to flag review');
+            toast.error(getFriendlyErrorMessage(err, 'Failed to flag review'));
         }
+    };
+
+    const filteredReviews = reviews.filter(r => {
+        if (!search) return true;
+        const s = search.toLowerCase();
+        return (
+            r.hostel_name?.toLowerCase().includes(s) ||
+            r.reviewer?.first_name?.toLowerCase().includes(s) ||
+            r.reviewer?.last_name?.toLowerCase().includes(s) ||
+            r.comments?.toLowerCase().includes(s)
+        );
+    });
+
+    const totalPages = Math.max(1, Math.ceil(filteredReviews.length / PAGE_SIZE));
+    const paginatedReviews = filteredReviews.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+    const handlePageChange = (p) => {
+        setPage(p);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     if (loading) {
@@ -84,9 +112,17 @@ export default function HostelReviews() {
 
     return (
         <div className="max-w-6xl mx-auto">
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900">Property Reviews</h1>
-                <p className="text-gray-500 mt-1 text-sm">Manage feedback from students and respond to their reviews.</p>
+            <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Property Reviews</h1>
+                    <p className="text-gray-500 mt-1 text-sm">Manage feedback from students and respond to their reviews.</p>
+                </div>
+                <SearchBar 
+                    value={search} 
+                    onChange={setSearch} 
+                    placeholder="Search reviews..." 
+                    className="w-full md:w-72 mt-4 md:mt-0"
+                />
             </div>
 
             {error ? (
@@ -101,9 +137,17 @@ export default function HostelReviews() {
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">No reviews yet</h3>
                     <p className="text-gray-500 max-w-sm mx-auto">Once students start reviewing your properties, they will appear here.</p>
                 </div>
+            ) : filteredReviews.length === 0 ? (
+                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-16 text-center">
+                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-50 mb-6">
+                        <FaSearch className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">No results found</h3>
+                    <p className="text-gray-500 max-w-sm mx-auto">No reviews matched your search criteria.</p>
+                </div>
             ) : (
                 <div className="space-y-6">
-                    {reviews.map((review) => (
+                    {paginatedReviews.map((review) => (
                         <div key={review.review_id} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md">
                             <div className="flex flex-col md:flex-row gap-6">
                                 <div className="flex items-start gap-4 flex-1">
@@ -199,20 +243,41 @@ export default function HostelReviews() {
                                 </div>
                                 <div className="border-t md:border-t-0 md:border-l border-gray-50 pt-4 md:pt-0 md:pl-6 shrink-0 flex md:flex-col items-start gap-2">
                                     <button
-                                        onClick={() => handleFlagReview(review.review_id)}
+                                        onClick={() => setFlagModal({ isOpen: true, reviewId: review.review_id })}
                                         className={`p-2 rounded-xl transition-colors ${review.is_flagged ? 'text-amber-500 bg-amber-50 cursor-default' : 'text-gray-300 hover:text-amber-500 hover:bg-amber-50'}`}
                                         title={review.is_flagged ? 'Flagged for moderation' : 'Flag for Inappropriate Content'}
                                         disabled={review.is_flagged}
                                     >
                                         <FaFlag size={14} />
                                     </button>
-
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
             )}
+
+            {/* Pagination Controls */}
+            {!loading && !error && totalPages > 1 && (
+                <Pagination 
+                    page={page} 
+                    totalPages={totalPages} 
+                    totalItems={filteredReviews.length} 
+                    pageSize={PAGE_SIZE} 
+                    onPageChange={setPage} 
+                />
+            )}
+
+            <InputModal
+                isOpen={flagModal.isOpen}
+                onClose={() => setFlagModal({ isOpen: false, reviewId: null })}
+                onConfirm={(reason) => handleFlagReview(flagModal.reviewId, reason)}
+                title="Flag Review"
+                message="Please provide a reason for flagging this review (e.g., inappropriate language, fake review, spam):"
+                placeholder="Reason for flagging..."
+                confirmText="Flag Review"
+                variant="warning"
+            />
         </div>
     );
 }

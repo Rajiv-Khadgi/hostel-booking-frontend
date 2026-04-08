@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
+import toast from 'react-hot-toast';
 import { FaHeart, FaTrash, FaMapMarkerAlt } from 'react-icons/fa';
+import SearchBar from '../../components/common/SearchBar';
+import Pagination from '../../components/common/Pagination';
+import { getFriendlyErrorMessage } from '../../utils/errorUtils';
 
 export default function SavedHostels() {
     const [hostels, setHostels] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 6;
 
     useEffect(() => {
         fetchSavedHostels();
@@ -17,6 +24,7 @@ export default function SavedHostels() {
             setLoading(true);
             const response = await api.get('/hostels/saved');
             setHostels(response.data.hostels || []);
+            setPage(1);
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to load saved hostels');
         } finally {
@@ -24,14 +32,33 @@ export default function SavedHostels() {
         }
     };
 
+    const filteredHostels = hostels.filter(h => {
+        if (!search) return true;
+        const s = search.toLowerCase();
+        return (
+            h.name?.toLowerCase().includes(s) ||
+            h.city?.toLowerCase().includes(s) ||
+            h.area?.toLowerCase().includes(s) ||
+            h.address?.toLowerCase().includes(s)
+        );
+    });
+
+    const totalPages = Math.max(1, Math.ceil(filteredHostels.length / PAGE_SIZE));
+    const paginatedHostels = filteredHostels.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search]);
+
     const handleRemove = async (e, id) => {
         e.preventDefault();
         e.stopPropagation();
         try {
             await api.delete(`/hostels/${id}/save`);
             setHostels(hostels.filter(h => h.hostel_id !== id));
+            toast.success('Removed from wishlist');
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to remove hostel');
+            toast.error(getFriendlyErrorMessage(err, 'Failed to remove hostel'));
         }
     };
 
@@ -69,8 +96,21 @@ export default function SavedHostels() {
                     </Link>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {hostels.map((hostel) => (
+                <div className="flex flex-col gap-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <SearchBar
+                            value={search}
+                            onChange={setSearch}
+                            placeholder="Search your wishlist..."
+                            className="w-full sm:max-w-xs"
+                        />
+                        <p className="text-sm font-semibold text-gray-700">
+                            {filteredHostels.length} saved {filteredHostels.length === 1 ? 'property' : 'properties'} found
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {paginatedHostels.map((hostel) => (
                         <Link
                             to={`/hostels/${hostel.hostel_id}`}
                             key={hostel.hostel_id}
@@ -121,6 +161,19 @@ export default function SavedHostels() {
                         </Link>
                     ))}
                 </div>
+
+                {totalPages > 1 && (
+                    <div className="mt-8">
+                        <Pagination
+                            page={page}
+                            totalPages={totalPages}
+                            totalItems={filteredHostels.length}
+                            pageSize={PAGE_SIZE}
+                            onPageChange={setPage}
+                        />
+                    </div>
+                )}
+            </div>
             )}
         </div>
     );

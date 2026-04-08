@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
+import toast from 'react-hot-toast';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import RoomFormDialog from '../../components/RoomFormDialog';
 import SearchBar from '../../components/common/SearchBar';
 import Pagination from '../../components/common/Pagination';
+import { getFriendlyErrorMessage } from '../../utils/errorUtils';
 import {
     FiHome, FiPlus, FiEdit2, FiTrash2, FiUser, FiUsers,
     FiGrid, FiAlertCircle, FiCheckCircle, FiXCircle, FiChevronDown
@@ -26,6 +29,7 @@ export default function Rooms() {
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, roomId: null });
     const PAGE_SIZE = 6;
 
     useEffect(() => { fetchHostels(); }, []);
@@ -56,7 +60,6 @@ export default function Rooms() {
     };
 
     const handleDeleteRoom = async (roomId) => {
-        if (!window.confirm('Delete this room? This cannot be undone.')) return;
         try {
             await api.delete(`/rooms/${roomId}`);
             setRooms(prev => prev.filter(r => r.room_id !== roomId));
@@ -65,8 +68,11 @@ export default function Rooms() {
                     ? { ...h, rooms: h.rooms.filter(r => r.room_id !== roomId) }
                     : h
             ));
+            toast.success('Room deleted successfully');
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to delete room');
+            toast.error(getFriendlyErrorMessage(err, 'Failed to delete room'));
+        } finally {
+            setConfirmDelete({ isOpen: false, roomId: null });
         }
     };
 
@@ -328,7 +334,7 @@ export default function Rooms() {
                                                                 <FiEdit2 size={13} />
                                                             </button>
                                                             <button
-                                                                onClick={() => handleDeleteRoom(room.room_id)}
+                                                                onClick={() => setConfirmDelete({ isOpen: true, roomId: room.room_id })}
                                                                 title="Delete room"
                                                                 className="w-8 h-8 rounded-xl flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
                                                             >
@@ -365,6 +371,16 @@ export default function Rooms() {
                 defaultHostelId={selectedHostelId ? Number(selectedHostelId) : undefined}
                 roomId={editingRoom?.room_id}
                 roomData={editingRoom}
+            />
+
+            <ConfirmModal
+                isOpen={confirmDelete.isOpen}
+                onClose={() => setConfirmDelete({ isOpen: false, roomId: null })}
+                onConfirm={() => handleDeleteRoom(confirmDelete.roomId)}
+                title="Delete Room"
+                message="Are you sure you want to delete this room? This cannot be undone and may affect active bookings."
+                confirmText="Delete"
+                variant="danger"
             />
         </div>
     );
