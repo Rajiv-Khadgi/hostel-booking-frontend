@@ -1,17 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import api from '../api/axios';
+import toast from 'react-hot-toast';
+import ConfirmModal from './common/ConfirmModal';
+import { getFriendlyErrorMessage } from '../utils/errorUtils';
 
 /**
  * ImageManager
- * Handles file drag & drop, uploading, and deleting images for a specific entity.
- * @param {string} entityType - 'hostels' or 'rooms'
- * @param {string|number} entityId - The ID of the hostel or room
+ * Handles file drag & drop, uploading, and deleting images for a specific hostel.
+ * @param {string|number} entityId - The ID of the hostel
  */
-export default function ImageManager({ entityType, entityId, maxImages }) {
+export default function ImageManager({ entityId, maxImages }) {
+    const entityType = 'hostels';
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
+    const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, imageId: null });
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -21,9 +25,8 @@ export default function ImageManager({ entityType, entityId, maxImages }) {
     const fetchImages = async () => {
         try {
             setLoading(true);
-            const res = await api.get(`/${entityType}/${entityId}`);
-            // Depending on the endpoint, the entity is returned under its singular name
-            const entity = res.data.hostel || res.data.room;
+            const res = await api.get(`/hostels/${entityId}`);
+            const entity = res.data.hostel;
             if (entity && entity.images) {
                 setImages(entity.images);
             }
@@ -56,7 +59,7 @@ export default function ImageManager({ entityType, entityId, maxImages }) {
         try {
             setUploading(true);
             setError('');
-            const res = await api.post(`/${entityType}/${entityId}/images`, formData, {
+            const res = await api.post(`/hostels/${entityId}/images`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setImages(res.data.images);
@@ -70,21 +73,24 @@ export default function ImageManager({ entityType, entityId, maxImages }) {
     };
 
     const handleDelete = async (imageId) => {
-        if (!window.confirm("Delete this image?")) return;
         try {
-            await api.delete(`/${entityType}/${entityId}/images/${imageId}`);
+            await api.delete(`/hostels/${entityId}/images/${imageId}`);
             setImages(images.filter(img => img.image_id !== imageId));
+            toast.success('Image deleted successfully');
         } catch (err) {
-            alert('Failed to delete image.');
+            toast.error(getFriendlyErrorMessage(err, 'Failed to delete image'));
+        } finally {
+            setConfirmDelete({ isOpen: false, imageId: null });
         }
     };
 
     const handleSetCover = async (imageId) => {
         try {
-            const res = await api.put(`/${entityType}/${entityId}/images/${imageId}/set-cover`);
+            const res = await api.put(`/hostels/${entityId}/images/${imageId}/set-cover`);
             setImages(res.data.images);
+            toast.success('Cover image updated');
         } catch (err) {
-            alert('Failed to set cover image.');
+            toast.error(getFriendlyErrorMessage(err, 'Failed to set cover image'));
         }
     };
 
@@ -110,7 +116,7 @@ export default function ImageManager({ entityType, entityId, maxImages }) {
                                 <img src={api.defaults.baseURL.replace('/api', '') + img.image_url} alt="Property setup" className="object-cover w-full h-full" />
                                 {img.is_cover && <span className="absolute top-2 left-2 bg-emerald-600/90 px-2 py-0.5 rounded text-[10px] uppercase font-bold text-white shadow-sm pointer-events-none z-10">COVER</span>}
                                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 gap-2">
-                                    {entityType === 'hostels' && !img.is_cover && (
+                                    {!img.is_cover && (
                                         <button
                                             type="button"
                                             onClick={(e) => { e.preventDefault(); handleSetCover(img.image_id); }}
@@ -121,7 +127,7 @@ export default function ImageManager({ entityType, entityId, maxImages }) {
                                     )}
                                     <button
                                         type="button"
-                                        onClick={(e) => { e.preventDefault(); handleDelete(img.image_id); }}
+                                        onClick={(e) => { e.preventDefault(); setConfirmDelete({ isOpen: true, imageId: img.image_id }); }}
                                         className="bg-red-500 text-white p-2 text-sm rounded-full hover:bg-red-600 shadow-md transform scale-90 group-hover:scale-100 transition-all"
                                     >
                                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -167,6 +173,16 @@ export default function ImageManager({ entityType, entityId, maxImages }) {
                     </div>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={confirmDelete.isOpen}
+                onClose={() => setConfirmDelete({ isOpen: false, imageId: null })}
+                onConfirm={() => handleDelete(confirmDelete.imageId)}
+                title="Delete Image"
+                message="Are you sure you want to delete this image? This action is permanent."
+                confirmText="Delete"
+                variant="danger"
+            />
         </div>
     );
 }

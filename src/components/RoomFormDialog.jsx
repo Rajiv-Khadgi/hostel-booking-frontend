@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import * as Yup from 'yup';
 import api from '../api/axios';
-import ImageManager from './ImageManager';
 import {
     FiHome, FiX, FiCheck, FiAlertCircle,
     FiUser, FiUsers, FiGrid, FiHash,
-    FiTag, FiDollarSign, FiCamera, FiEdit2
+    FiTag, FiDollarSign, FiEdit2
 } from 'react-icons/fi';
 
 const roomSchema = Yup.object().shape({
@@ -418,13 +417,6 @@ export default function RoomFormDialog({ isOpen, onClose, onSuccess, defaultHost
 
                         </form>
 
-                        {/* ── Manage Photo (edit mode only) ── */}
-                        {isEditMode && (
-                            <div className="px-6 pb-6">
-                                <SectionHeader Icon={FiCamera} label="Photo" />
-                                <ImageManager entityType="rooms" entityId={roomId} maxImages={1} />
-                            </div>
-                        )}
                     </div>
                 )}
 

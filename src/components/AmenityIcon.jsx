@@ -37,14 +37,28 @@ export default function AmenityIcon({ icon, name, variant = 'pill' }) {
 
     if (variant === 'tile') {
         return (
-            <div className="flex flex-col items-center gap-2 text-center">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+            <div className="flex flex-col items-center justify-center gap-3 text-center w-28 h-28 p-3 rounded-3xl bg-gray-50/80 border border-gray-100 hover:bg-emerald-50 hover:border-emerald-200 hover:shadow-md hover:shadow-emerald-100/50 transition-all group">
+                <div className="w-12 h-12 flex flex-col items-center justify-center text-emerald-600/80 group-hover:scale-110 group-hover:text-emerald-600 transition-all">
                     {IconComponent
-                        ? <IconComponent size={18} />
-                        : <FiCheck size={16} className="text-emerald-500" />
+                        ? <IconComponent size={32} />
+                        : <FiCheck size={32} className="text-emerald-500" />
                     }
                 </div>
-                <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wider leading-tight max-w-16">
+                <span className="text-[12px] font-bold text-gray-700 leading-tight group-hover:text-emerald-800 transition-colors">
+                    {name}
+                </span>
+            </div>
+        );
+    }
+
+    if (variant === 'inline') {
+        return (
+            <div className="flex items-center gap-3 w-full">
+                {IconComponent
+                    ? <IconComponent size={20} className="text-emerald-600 shrink-0" />
+                    : <FiCheck size={20} className="text-emerald-500 shrink-0" />
+                }
+                <span className="text-[15px] font-semibold tracking-tight text-gray-800 leading-tight">
                     {name}
                 </span>
             </div>
