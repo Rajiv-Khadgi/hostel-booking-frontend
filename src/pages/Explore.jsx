@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import toast from 'react-hot-toast';
 import MapComponent from '../components/MapComponent';
 import AmenityIcon from '../components/AmenityIcon';
+import useDebounce from '../hooks/useDebounce';
+import { getFriendlyErrorMessage } from '../utils/errorUtils';
 import { FaMale, FaFemale, FaUserFriends } from 'react-icons/fa';
 import {
     FiSearch, FiMapPin, FiHome, FiNavigation, FiX,
@@ -81,7 +84,7 @@ function DualRangeSlider({ min, max, step, valueMin, valueMax, onChangeMin, onCh
                     if (v < valueMax) onChangeMin(v);
                 }}
                 className={`absolute inset-0 w-full bg-transparent appearance-none cursor-pointer h-1.5 ${valueMin > max / 1.5 ? 'z-30' : 'z-20'}`}
-                style={{ 
+                style={{
                     pointerEvents: 'none',
                     WebkitAppearance: 'none'
                 }}
@@ -94,15 +97,16 @@ function DualRangeSlider({ min, max, step, valueMin, valueMax, onChangeMin, onCh
                     if (v > valueMin) onChangeMax(v);
                 }}
                 className="absolute inset-0 w-full bg-transparent appearance-none cursor-pointer h-1.5 z-20"
-                style={{ 
+                style={{
                     pointerEvents: 'none',
                     WebkitAppearance: 'none'
                 }}
             />
-            
+
             {/* Logic: Need to add styles for thumbs to have pointer-events auto. 
                 In Tailwind/React, we can inject a global style for this component or use a specialized class. */}
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 input[type=range]::-webkit-slider-thumb { pointer-events: auto; width: 24px; height: 24px; -webkit-appearance: none; }
                 input[type=range]::-moz-range-thumb { pointer-events: auto; width: 24px; height: 24px; }
             `}} />
@@ -136,7 +140,7 @@ function FilterPill({ label, active, open, onClick, onClear, icon: Icon, childre
         <div ref={ref} className="relative">
             <button
                 onClick={onClick}
-                className={`inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl border text-sm font-bold transition-all select-none shadow-xs ${active || open
+                className={`inline-flex items-center gap-5.5 px-5 py-4 rounded-full border text-sm font-medium transition-all select-none shadow-xs ${active || open
                     ? 'border-emerald-600 text-gray-900 bg-emerald-50/50 ring-1 ring-emerald-100'
                     : 'border-gray-200 text-gray-900 bg-white hover:border-gray-300 hover:shadow-sm'
                     }`}
@@ -210,13 +214,16 @@ export default function Explore() {
     const [bedsFilter, setBedsFilter] = useState(0);
     const [amenityFilter, setAmenityFilter] = useState(new Set());
 
+    const debouncedSearch = useDebounce(search, 500);
+    const debouncedCity = useDebounce(city, 500);
+
     const toggleOpen = useCallback((key) =>
         setOpenFilter(prev => prev === key ? null : key), []);
 
     useEffect(() => {
         fetchHostels();
         if (localStorage.getItem('accessToken')) fetchSavedIds();
-    }, [search, city]);
+    }, [debouncedSearch, debouncedCity]);
 
     const fetchSavedIds = async () => {
         try {
@@ -278,17 +285,24 @@ export default function Explore() {
 
     const handleToggleSave = async (e, id) => {
         e.preventDefault(); e.stopPropagation();
-        if (!localStorage.getItem('accessToken')) { alert('Please login to save hostels'); return; }
+        if (!localStorage.getItem('accessToken')) {
+            toast.error('Please login to save hostels');
+            return;
+        }
         const isSaved = savedIds.has(id);
         try {
             if (isSaved) {
                 await api.delete(`/hostels/${id}/save`);
                 setSavedIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+                toast.success('Removed from wishlist');
             } else {
                 await api.post(`/hostels/${id}/save`);
                 setSavedIds(prev => new Set(prev).add(id));
+                toast.success('Saved to wishlist!');
             }
-        } catch (err) { alert(err.response?.data?.error || 'Action failed'); }
+        } catch (err) {
+            toast.error(getFriendlyErrorMessage(err, 'Failed to update wishlist'));
+        }
     };
 
     const clearFilters = () => {
@@ -479,7 +493,7 @@ export default function Explore() {
                 {/* ── Filter Bar ── */}
                 <div className="flex flex-col items-center gap-6 mb-12">
                     {/* Interactive Pills + Clear */}
-                    <div className="flex flex-wrap items-center justify-center gap-3">
+                    <div className="flex flex-wrap items-center justify-center gap-7">
                         {/* Sort By */}
                         <FilterPill
                             label={SORT_OPTIONS.find(o => o.value === sortBy)?.label}
@@ -848,7 +862,7 @@ export default function Explore() {
                                                     </div>
 
                                                     {/* Footer: Price + CTA */}
-                                                    <div className="mt-auto pt-5 border-t border-gray-50 flex items-center justify-between">
+                                                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
                                                         <div className="space-y-0.5">
                                                             <div className="flex items-baseline gap-1">
                                                                 <span className="text-xl font-bold text-gray-900 tracking-tight">₹{Number(price).toLocaleString()}</span>

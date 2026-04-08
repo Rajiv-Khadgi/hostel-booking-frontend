@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Link } from 'react-router-dom';
@@ -20,7 +20,7 @@ let DefaultIcon = L.icon({
 // A different colored icon for the user location (using a standard Leaflet feature hack or custom div)
 const UserLocationIcon = L.divIcon({
     className: 'custom-user-location-marker',
-    html: `<div style="background-color: #3b82f6; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></div>`,
+    html: `<div style="background-color: #ef4444; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3); position: relative;"><div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background-color: #ef4444; opacity: 0.4; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div></div>`,
     iconSize: [24, 24],
     iconAnchor: [12, 12],
     popupAnchor: [0, -12],
@@ -86,6 +86,46 @@ export default function MapComponent({
 
     return (
         <div style={{ height, width: "100%", zIndex: 0 }} className="rounded-xl overflow-hidden shadow-sm border border-gray-200 z-0">
+            <style>{`
+                .custom-tooltip {
+                    background: white !important;
+                    border: 1px solid #e2e8f0 !important;
+                    border-radius: 6px !important;
+                    padding: 4px 8px !important;
+                    font-weight: 600 !important;
+                    font-size: 0.75rem !important;
+                    color: #1a202c !important;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+                }
+                .custom-tooltip:before {
+                    border-top-color: white !important;
+                }
+                .custom-popup .leaflet-popup-content-wrapper {
+                    background: white !important;
+                    color: #1a202c !important;
+                    border-radius: 12px !important;
+                    padding: 0 !important;
+                    overflow: hidden !important;
+                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+                }
+                .custom-popup .leaflet-popup-content {
+                    margin: 12px 16px !important;
+                    width: auto !important;
+                }
+                .custom-popup .leaflet-popup-content a {
+                    color: white !important;
+                    text-decoration: none !important;
+                }
+                .custom-popup .leaflet-popup-tip-container {
+                    margin-top: -1px !important;
+                }
+                @keyframes ping {
+                    75%, 100% {
+                        transform: scale(2);
+                        opacity: 0;
+                    }
+                }
+            `}</style>
             <MapContainer 
                 center={actualCenter} 
                 zoom={zoom} 
@@ -101,8 +141,8 @@ export default function MapComponent({
                 {/* Render User Location Marker if Provided */}
                 {userLocation && userLocation.lat && (
                     <Marker position={[userLocation.lat, userLocation.lng]} icon={UserLocationIcon}>
-                        <Popup>
-                            <div className="font-bold text-blue-600">You are here</div>
+                        <Popup className="custom-popup">
+                            <div className="font-bold text-red-600">You are here</div>
                         </Popup>
                     </Marker>
                 )}
@@ -112,33 +152,43 @@ export default function MapComponent({
                     if (isNaN(pt.lat) || isNaN(pt.lng)) return null;
                     return (
                         <Marker key={idx} position={[pt.lat, pt.lng]}>
-                            <Popup>
-                                <div className="min-w-[150px]">
-                                    <h4 className="font-bold text-gray-900 leading-tight mb-1">{pt.name}</h4>
-                                    <p className="text-xs text-gray-500 mb-2">{pt.address}</p>
+                            <Tooltip 
+                                permanent 
+                                direction="top" 
+                                offset={[0, -32]} 
+                                className="custom-tooltip"
+                            >
+                                {pt.name}
+                            </Tooltip>
+                            <Popup className="custom-popup">
+                                <div className="min-w-[180px] p-1">
+                                    <h4 className="font-bold text-gray-950 text-sm leading-tight mb-1">{pt.name}</h4>
+                                    <p className="text-xs text-gray-600 mb-3">{pt.address}</p>
                                     
                                     {pt.distance !== undefined && (
-                                        <div className="text-xs font-semibold text-emerald-600 mb-2">
+                                        <div className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full inline-block mb-3">
                                             {parseFloat(pt.distance).toFixed(2)} km away
                                         </div>
                                     )}
                                     
-                                    {!singleHostel && pt.hostel_id && (
-                                        <Link 
-                                            to={`/hostels/${pt.hostel_id}`}
-                                            className="block w-full text-center bg-emerald-600 text-white text-xs py-1 rounded hover:bg-emerald-700 transition"
+                                    <div className="flex flex-col gap-2 mt-2">
+                                        {!singleHostel && pt.hostel_id && (
+                                            <Link 
+                                                to={`/hostels/${pt.hostel_id}`}
+                                                className="flex items-center justify-center w-full bg-emerald-700 text-white text-[11px] font-semibold py-1.5 rounded-lg hover:bg-emerald-800 transition-colors shadow-sm"
+                                            >
+                                                View Details
+                                            </Link>
+                                        )}
+                                        <a 
+                                            href={`https://www.google.com/maps/dir/?api=1&destination=${pt.lat},${pt.lng}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-center w-full bg-slate-900 text-white text-[11px] font-semibold py-1.5 rounded-lg hover:bg-black transition-colors shadow-sm"
                                         >
-                                            View Details
-                                        </Link>
-                                    )}
-                                    <a 
-                                        href={`https://www.google.com/maps/dir/?api=1&destination=${pt.lat},${pt.lng}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block w-full text-center bg-blue-600 text-white text-xs py-1 mt-1 rounded hover:bg-blue-700 transition"
-                                    >
-                                        Get Directions
-                                    </a>
+                                            Get Directions
+                                        </a>
+                                    </div>
                                 </div>
                             </Popup>
                         </Marker>
