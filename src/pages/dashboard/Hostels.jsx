@@ -7,6 +7,7 @@ import {
     FiHome, FiMapPin, FiEdit2, FiPlus,
     FiCheckCircle, FiClock, FiXCircle, FiUsers, FiUser, FiAlertCircle
 } from 'react-icons/fi';
+import { getImageUrl } from '../../utils/hostelUtils';
 
 const STATUS_CONFIG = {
     APPROVED: {
@@ -224,7 +225,7 @@ export default function Hostels() {
                                 <div className="relative h-52 bg-gray-100 overflow-hidden">
                                     {hostel.images && hostel.images.length > 0 ? (
                                         <img
-                                            src={api.defaults.baseURL.replace('/api', '') + hostel.images[0].image_url}
+                                            src={getImageUrl(hostel.images[0].image_url, api.defaults.baseURL)}
                                             alt={hostel.name}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                         />

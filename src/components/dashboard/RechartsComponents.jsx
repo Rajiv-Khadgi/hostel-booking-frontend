@@ -125,7 +125,7 @@ export const ComposedMetricsChart = ({ data, bar = 'bookings', line = 'revenue' 
 
 // Top Performers List Chart
 export const TopPerformersChart = ({ data, title = "Top Performers" }) => {
-    const maxValue = Math.max(...data.map(d => Number(d.total || 0)));
+    const maxValue = Math.max(...data.map(d => Number(d.total || 0)), 1);
 
     return (
         <div className="space-y-4">
@@ -144,6 +144,56 @@ export const TopPerformersChart = ({ data, title = "Top Performers" }) => {
                 </div>
             ))}
         </div>
+    );
+};
+
+// Hostel Occupancy Distribution Chart
+export const OccupancyDistributionChart = ({ data }) => {
+    return (
+        <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={data} layout="vertical" margin={{ left: 30, right: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={true} vertical={false} />
+                <XAxis type="number" domain={[0, 100]} hide />
+                <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    stroke="#9ca3af" 
+                    width={100}
+                    style={{ fontSize: '12px', fontWeight: 'bold' }} 
+                />
+                <Tooltip 
+                    cursor={{ fill: '#f9fafb' }}
+                    content={({ active, payload }) => {
+                        if (active && payload?.length) {
+                            const d = payload[0].payload;
+                            return (
+                                <div className="bg-gray-900 text-white p-3 rounded-lg shadow-lg border border-gray-700">
+                                    <p className="text-sm font-semibold mb-1">{d.name}</p>
+                                    <div className="flex flex-col gap-1 text-xs">
+                                        <p className="text-emerald-400 font-bold">{d.occupancy}% Occupied</p>
+                                        <p className="text-gray-400">{d.occupied} / {d.total} Beds</p>
+                                    </div>
+                                </div>
+                            );
+                        }
+                        return null;
+                    }}
+                />
+                <Bar 
+                    dataKey="occupancy" 
+                    fill="#3b82f6" 
+                    radius={[0, 8, 8, 0]} 
+                    barSize={32}
+                >
+                    {data.map((entry, index) => (
+                        <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.occupancy > 80 ? '#10b981' : entry.occupancy > 50 ? '#3b82f6' : '#f59e0b'} 
+                        />
+                    ))}
+                </Bar>
+            </BarChart>
+        </ResponsiveContainer>
     );
 };
 

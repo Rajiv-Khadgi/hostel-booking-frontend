@@ -129,7 +129,7 @@ export default function AdminReviews() {
                                     </div>
                                     <div>
                                         <div className="text-sm font-bold text-gray-900">{review.reviewer?.first_name} {review.reviewer?.last_name}</div>
-                                        <div className="text-xs text-gray-400 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px]">{review.reviewer?.email}</div>
+                                        <div className="text-xs text-gray-400 font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-37.5">{review.reviewer?.email}</div>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">

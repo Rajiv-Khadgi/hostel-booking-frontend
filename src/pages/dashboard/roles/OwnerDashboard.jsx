@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import StatCard from '../../../components/dashboard/StatCard';
-import { EnhancedAreaChart, RevenueBreakdownChart, BookingStatusChart, PerformanceRadarChart, TopPerformersChart } from '../../../components/dashboard/RechartsComponents';
+import { EnhancedAreaChart, RevenueBreakdownChart, BookingStatusChart, OccupancyDistributionChart, TopPerformersChart } from '../../../components/dashboard/RechartsComponents';
 import { ComparisonCard, GoalProgressCard, InsightCard, PerformanceMetric } from '../../../components/dashboard/PerformanceIndicators';
 import { FaWallet, FaChartLine, FaCalendarCheck, FaRegClock, FaHeart, FaLightbulb, FaFire } from 'react-icons/fa';
 
@@ -14,7 +14,7 @@ export default function OwnerDashboard({ stats }) {
     const formatChartData = useMemo(() => {
         if (!charts.revenueTrend) return [];
         return charts.revenueTrend.map(d => ({
-            name: new Date(d.month).toLocaleDateString('default', { month: 'short', year: '2-digit' }),
+            name: d.month ? new Date(d.month).toLocaleDateString('default', { month: 'short', year: '2-digit' }) : 'N/A',
             total: Number(d.total || 0)
         }));
     }, [charts.revenueTrend]);
@@ -30,7 +30,7 @@ export default function OwnerDashboard({ stats }) {
     const topRoomsData = useMemo(() => {
         if (!charts.revenueByRoom) return [];
         return charts.revenueByRoom.map((item, idx) => ({
-            name: item['room.room_type'] || `Room Type ${idx + 1}`,
+            name: item.room_type || `Room Type ${idx + 1}`,
             total: Number(item.total || 0)
         }));
     }, [charts.revenueByRoom]);
@@ -85,14 +85,16 @@ export default function OwnerDashboard({ stats }) {
                     </div>
                 </div>
 
-                {/* Performance Radar */}
+                {/* Hostel Occupancy Distribution */}
                 <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                    <h3 className="text-xl font-black text-gray-900 tracking-tight mb-8">Performance Metrics</h3>
+                    <h3 className="text-xl font-black text-gray-900 tracking-tight mb-2">Occupancy by Hostel</h3>
+                    <p className="text-sm text-gray-400 font-medium mb-8">Current bed distribution</p>
                     <div className="h-[300px]">
-                        <PerformanceRadarChart data={metrics} />
+                        <OccupancyDistributionChart data={charts.hostelOccupancy || []} />
                     </div>
                 </div>
             </div>
+
 
             {/* Revenue & Booking Status */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

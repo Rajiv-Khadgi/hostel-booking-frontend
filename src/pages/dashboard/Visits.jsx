@@ -10,6 +10,7 @@ import {
     FiCalendar, FiMapPin, FiUser, FiFilter,
     FiCheck, FiX, FiAlertCircle 
 } from 'react-icons/fi';
+import { getImageUrl } from '../../utils/hostelUtils';
 
 const STATUS_CONFIG = {
     REQUESTED: { label: 'Requested', badge: 'bg-amber-100 text-amber-700 border-amber-200'       },
@@ -56,6 +57,19 @@ export default function Visits() {
             toast.success(`Visit ${status.toLowerCase()} successfully`);
         } catch (err) {
             toast.error(getFriendlyErrorMessage(err, 'Failed to update visit status'));
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const handleCancelVisit = async (visitId) => {
+        try {
+            setActionLoading(visitId);
+            await api.patch(`/visits/${visitId}/cancel`);
+            setVisits(prev => prev.filter(v => v.visit_id !== visitId));
+            toast.success('Visit cancelled successfully');
+        } catch (err) {
+            toast.error(getFriendlyErrorMessage(err, 'Failed to cancel visit'));
         } finally {
             setActionLoading(null);
         }
@@ -138,7 +152,7 @@ export default function Visits() {
                             value={search}
                             onChange={setSearch}
                             placeholder={isOwner ? 'Search hostel or student…' : 'Search hostel or city…'}
-                            className="flex-1 min-w-[200px]"
+                            className="flex-1 min-w-50"
                         />
                         <FilterSelect
                             value={statusFilter}
@@ -216,7 +230,7 @@ export default function Visits() {
                                         <div className="h-14 w-14 bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 shrink-0">
                                             {visit.hostel?.images?.length > 0 ? (
                                                 <img
-                                                    src={api.defaults.baseURL.replace('/api', '') + visit.hostel.images[0].image_url}
+                                                    src={getImageUrl(visit.hostel.images[0].image_url, api.defaults.baseURL)}
                                                     alt={visit.hostel.name}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -271,6 +285,16 @@ export default function Visits() {
                                                     <FiX size={14} />
                                                 </button>
                                             </div>
+                                        )}
+                                        {!isOwner && visit.status === 'REQUESTED' && (
+                                            <button
+                                                onClick={() => handleCancelVisit(visit.visit_id)}
+                                                disabled={isActioning}
+                                                title="Cancel"
+                                                className="w-8 h-8 rounded-xl flex items-center justify-center bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                            >
+                                                {isActioning ? <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" /> : <FiX size={14} />}
+                                            </button>
                                         )}
                                     </div>
                                 </div>

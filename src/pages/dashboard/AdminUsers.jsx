@@ -14,6 +14,7 @@ import {
     FaEnvelope,
     FaPhone,
 } from 'react-icons/fa';
+import { getImageUrl } from '../../utils/hostelUtils';
 
 export default function AdminUsers() {
     const [users, setUsers] = useState([]);
@@ -134,7 +135,7 @@ export default function AdminUsers() {
                                             <div className="flex items-center">
                                                 <div className="h-10 w-10 flex-shrink-0 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 font-bold overflow-hidden">
                                                     {u.profile_image ? (
-                                                        <img src={`${api.defaults.baseURL.replace('/api', '')}/${u.profile_image}`} alt="" className="w-full h-full object-cover" />
+                                                        <img src={getImageUrl(u.profile_image, api.defaults.baseURL)} alt="" className="w-full h-full object-cover" />
                                                     ) : (
                                                         <FaUser size={16} />
                                                     )}

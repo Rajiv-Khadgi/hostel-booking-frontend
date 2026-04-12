@@ -87,6 +87,9 @@ export default function Bookings() {
         try {
             setActionLoading(`${bookingId}-${type}`);
             const res = await api.post('/payments/initiate', { bookingId, paymentType: type, amount, months });
+            if (res.data.pidx) {
+                sessionStorage.setItem('lastPaymentPidx', res.data.pidx);
+            }
             if (res.data.payment_url) window.location.href = res.data.payment_url;
         } catch (err) {
             toast.error(getFriendlyErrorMessage(err, 'Payment failed'));
@@ -175,7 +178,7 @@ export default function Bookings() {
                             value={search}
                             onChange={setSearch}
                             placeholder={isOwner ? 'Search hostel or student…' : 'Search hostel…'}
-                            className="flex-1 min-w-[200px]"
+                            className="flex-1 min-w-50"
                         />
                         <FilterSelect
                             value={statusFilter}

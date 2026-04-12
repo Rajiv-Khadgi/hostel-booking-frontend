@@ -12,18 +12,10 @@ export default function StudentDashboard({ stats }) {
     const formatChartData = useMemo(() => {
         if (!stats.charts?.spendingTrend) return [];
         return stats.charts.spendingTrend.map(d => ({
-            name: new Date(d.month).toLocaleDateString('default', { month: 'short', year: '2-digit' }),
+            name: d.month ? new Date(d.month).toLocaleDateString('default', { month: 'short', year: '2-digit' }) : 'N/A',
             total: Number(d.total || 0)
         }));
     }, [stats.charts?.spendingTrend]);
-
-    const formatWeeklyData = useMemo(() => {
-        if (!stats.charts?.weeklySpending) return [];
-        return stats.charts.weeklySpending.map(d => ({
-            name: new Date(d.date).toLocaleDateString('default', { month: 'short', day: 'numeric' }),
-            total: Number(d.total || 0)
-        }));
-    }, [stats.charts?.weeklySpending]);
 
     const bookingStatusData = useMemo(() => {
         if (!stats.charts?.bookingsByStatus) return [];
@@ -105,27 +97,13 @@ export default function StudentDashboard({ stats }) {
             </div>
 
             {/* Weekly Spending & Booking Status */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Weekly Breakdown */}
-                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="mb-8">
-                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Weekly Spending</h3>
-                        <p className="text-gray-400 font-medium">Last 4 weeks breakdown</p>
-                    </div>
-                    <div className="h-[250px]">
-                        <EnhancedAreaChart data={formatWeeklyData} color="#10b981" dataKey="total" />
-                    </div>
+            <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <div className="mb-8">
+                    <h3 className="text-xl font-black text-gray-900 tracking-tight">Booking Status Distribution</h3>
+                    <p className="text-gray-400 font-medium">Visual breakdown of your booking lifecycle</p>
                 </div>
-
-                {/* Booking Status Distribution */}
-                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="mb-8">
-                        <h3 className="text-xl font-black text-gray-900 tracking-tight">Booking Status</h3>
-                        <p className="text-gray-400 font-medium">Current booking breakdown</p>
-                    </div>
-                    <div className="h-[250px]">
-                        <BookingStatusChart data={bookingStatusData} />
-                    </div>
+                <div className="h-[300px]">
+                    <BookingStatusChart data={bookingStatusData} />
                 </div>
             </div>
 

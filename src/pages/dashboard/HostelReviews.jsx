@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import Pagination from '../../components/common/Pagination';
 import SearchBar from '../../components/common/SearchBar';
 import InputModal from '../../components/common/InputModal';
 import { getFriendlyErrorMessage } from '../../utils/errorUtils';
-import { FaStar, FaReply, FaTrash, FaMapMarkerAlt, FaUser, FaFlag, FaSearch } from 'react-icons/fa';
+import { getImageUrl } from '../../utils/hostelUtils';
+import { FaStar, FaReply, FaFlag, FaSearch, FaUndo } from 'react-icons/fa';
 
 export default function HostelReviews() {
-    const { user } = useAuth();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -21,29 +20,34 @@ export default function HostelReviews() {
     const [flagModal, setFlagModal] = useState({ isOpen: false, reviewId: null });
     const PAGE_SIZE = 10;
 
-    useEffect(() => { setPage(1); }, [search]);
+    useEffect(() => {
+        setPage(1);
+    }, [search]);
 
     useEffect(() => {
         fetchOwnerReviews();
     }, []);
 
+    const getDisplayDate = (value) => {
+        if (!value) return 'Recently';
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? 'Recently' : parsed.toLocaleDateString();
+    };
+
+    const getAvatarSrc = (profileImage) => {
+        return getImageUrl(profileImage, api.defaults.baseURL);
+    };
+
     const fetchOwnerReviews = async () => {
         try {
             setLoading(true);
-            // We'll need to fetch reviews for all hostels owned by the owner
-            // For now, let's assume the backend has an endpoint or we fetch per hostel
-            // Based on our implementation plan, we need to handle this.
-            // Let's check how we can get all reviews for an owner.
-            // In reviewService, we have getHostelReviews(hostelId).
-            // We might need to fetch all owner's hostels first.
-
             const hostelsRes = await api.get('/hostels/my-hostels');
             const hostels = hostelsRes.data.hostels || [];
 
             let allReviews = [];
             for (const hostel of hostels) {
-                const reviewsRes = await api.get(`/hostels/${hostel.hostel_id}/reviews`);
-                const hostelReviews = reviewsRes.data.reviews.map(r => ({ ...r, hostel_name: hostel.name }));
+                const reviewsRes = await api.get(`/reviews/hostel/${hostel.hostel_id}`);
+                const hostelReviews = reviewsRes.data.reviews.map((r) => ({ ...r, hostel_name: hostel.name }));
                 allReviews = [...allReviews, ...hostelReviews];
             }
 
@@ -83,7 +87,17 @@ export default function HostelReviews() {
         }
     };
 
-    const filteredReviews = reviews.filter(r => {
+    const handleUnflagReview = async (reviewId) => {
+        try {
+            await api.patch(`/reviews/${reviewId}/unflag`);
+            fetchOwnerReviews();
+            toast.success('Review restored successfully.');
+        } catch (err) {
+            toast.error(getFriendlyErrorMessage(err, 'Failed to restore review'));
+        }
+    };
+
+    const filteredReviews = reviews.filter((r) => {
         if (!search) return true;
         const s = search.toLowerCase();
         return (
@@ -96,11 +110,6 @@ export default function HostelReviews() {
 
     const totalPages = Math.max(1, Math.ceil(filteredReviews.length / PAGE_SIZE));
     const paginatedReviews = filteredReviews.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-    const handlePageChange = (p) => {
-        setPage(p);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
 
     if (loading) {
         return (
@@ -117,10 +126,10 @@ export default function HostelReviews() {
                     <h1 className="text-2xl font-bold text-gray-900">Property Reviews</h1>
                     <p className="text-gray-500 mt-1 text-sm">Manage feedback from students and respond to their reviews.</p>
                 </div>
-                <SearchBar 
-                    value={search} 
-                    onChange={setSearch} 
-                    placeholder="Search reviews..." 
+                <SearchBar
+                    value={search}
+                    onChange={setSearch}
+                    placeholder="Search reviews..."
                     className="w-full md:w-72 mt-4 md:mt-0"
                 />
             </div>
@@ -154,12 +163,12 @@ export default function HostelReviews() {
                                     <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-100 bg-gray-50 shrink-0">
                                         {review.reviewer?.profile_image ? (
                                             <img
-                                                src={api.defaults.baseURL.replace('/api', '') + '/' + review.reviewer.profile_image}
+                                                src={getAvatarSrc(review.reviewer.profile_image)}
                                                 className="w-full h-full object-cover"
                                                 alt={review.reviewer.first_name}
                                             />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-emerald-50 text-emerald-700 font-bold">
+                                            <div className="w-full h-full flex items-center justify-center bg-emerald-50 font-bold" style={{ color: '#047857' }}>
                                                 {review.reviewer?.first_name?.[0]}{review.reviewer?.last_name?.[0]}
                                             </div>
                                         )}
@@ -173,7 +182,7 @@ export default function HostelReviews() {
                                                 </p>
                                             </div>
                                             <span className="text-xs text-gray-400">
-                                                {(review.created_at || review.createdAt) ? new Date(review.created_at || review.createdAt).toLocaleDateString() : 'Recently'}
+                                                {getDisplayDate(review.created_at || review.createdAt)}
                                             </span>
                                         </div>
                                         <div className="flex text-amber-400 my-2">
@@ -181,6 +190,11 @@ export default function HostelReviews() {
                                                 <FaStar key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-current' : 'text-gray-200'}`} />
                                             ))}
                                         </div>
+                                        {review.is_verified && (
+                                            <div className="mb-3 inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full uppercase tracking-widest border border-emerald-100">
+                                                Verified stay
+                                            </div>
+                                        )}
                                         <p className="text-gray-600 text-sm leading-relaxed">{review.comments}</p>
 
                                         {review.reply ? (
@@ -216,7 +230,7 @@ export default function HostelReviews() {
                                                     value={replyText}
                                                     onChange={(e) => setReplyText(e.target.value)}
                                                     placeholder="Write your response to the student..."
-                                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm min-h-[80px]"
+                                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm min-h-20"
                                                 />
                                                 <div className="flex gap-2">
                                                     <button
@@ -242,14 +256,25 @@ export default function HostelReviews() {
                                     </div>
                                 </div>
                                 <div className="border-t md:border-t-0 md:border-l border-gray-50 pt-4 md:pt-0 md:pl-6 shrink-0 flex md:flex-col items-start gap-2">
-                                    <button
-                                        onClick={() => setFlagModal({ isOpen: true, reviewId: review.review_id })}
-                                        className={`p-2 rounded-xl transition-colors ${review.is_flagged ? 'text-amber-500 bg-amber-50 cursor-default' : 'text-gray-300 hover:text-amber-500 hover:bg-amber-50'}`}
-                                        title={review.is_flagged ? 'Flagged for moderation' : 'Flag for Inappropriate Content'}
-                                        disabled={review.is_flagged}
-                                    >
-                                        <FaFlag size={14} />
-                                    </button>
+                                    {review.is_flagged ? (
+                                        <button
+                                            onClick={() => handleUnflagReview(review.review_id)}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition-colors"
+                                            title="Restore review visibility"
+                                        >
+                                            <FaUndo size={12} />
+                                            Restore
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setFlagModal({ isOpen: true, reviewId: review.review_id })}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-gray-500 bg-gray-50 border border-gray-100 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                                            title="Flag for inappropriate content"
+                                        >
+                                            <FaFlag size={12} />
+                                            Flag
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -257,25 +282,25 @@ export default function HostelReviews() {
                 </div>
             )}
 
-            {/* Pagination Controls */}
             {!loading && !error && totalPages > 1 && (
-                <Pagination 
-                    page={page} 
-                    totalPages={totalPages} 
-                    totalItems={filteredReviews.length} 
-                    pageSize={PAGE_SIZE} 
-                    onPageChange={setPage} 
+                <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    totalItems={filteredReviews.length}
+                    pageSize={PAGE_SIZE}
+                    onPageChange={setPage}
                 />
             )}
 
             <InputModal
                 isOpen={flagModal.isOpen}
                 onClose={() => setFlagModal({ isOpen: false, reviewId: null })}
-                onConfirm={(reason) => handleFlagReview(flagModal.reviewId, reason)}
+                onSubmit={(reason) => handleFlagReview(flagModal.reviewId, reason)}
                 title="Flag Review"
                 message="Please provide a reason for flagging this review (e.g., inappropriate language, fake review, spam):"
                 placeholder="Reason for flagging..."
                 confirmText="Flag Review"
+                required
                 variant="warning"
             />
         </div>

@@ -6,6 +6,7 @@ import { FaHeart, FaTrash, FaMapMarkerAlt } from 'react-icons/fa';
 import SearchBar from '../../components/common/SearchBar';
 import Pagination from '../../components/common/Pagination';
 import { getFriendlyErrorMessage } from '../../utils/errorUtils';
+import { getImageUrl } from '../../utils/hostelUtils';
 
 export default function SavedHostels() {
     const [hostels, setHostels] = useState([]);
@@ -119,7 +120,7 @@ export default function SavedHostels() {
                             <div className="h-48 bg-gray-100 relative overflow-hidden">
                                 {hostel.images && hostel.images.length > 0 ? (
                                     <img
-                                        src={api.defaults.baseURL.replace('/api', '') + hostel.images[0].image_url}
+                                        src={getImageUrl(hostel.images[0].image_url, api.defaults.baseURL)}
                                         alt={hostel.name}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />

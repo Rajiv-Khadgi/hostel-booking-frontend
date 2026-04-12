@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../api/axios';
+import { getImageUrl } from '../../utils/hostelUtils';
 
 export default function Profile() {
     const { user, updateUser } = useAuth();
@@ -68,7 +69,7 @@ export default function Profile() {
 
     const getAvatarUrl = () => {
         if (user?.profile_image) {
-            return api.defaults.baseURL.replace('/api', '') + '/' + user.profile_image;
+            return getImageUrl(user.profile_image, api.defaults.baseURL);
         }
         return `https://ui-avatars.com/api/?name=${user?.first_name}+${user?.middle_name ? user.middle_name + '+' : ''}${user?.last_name}&background=10b981&color=fff&size=200`;
     };

@@ -18,6 +18,7 @@ import {
     FaClock
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '../../utils/hostelUtils';
 
 export default function AdminHostels() {
     const [hostels, setHostels] = useState([]);
@@ -154,7 +155,7 @@ export default function AdminHostels() {
                             <div key={hostel.hostel_id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow flex flex-col">
                             <div className="h-48 relative overflow-hidden group">
                                 <img 
-                                    src={hostel.images?.[0]?.image_url ? `${api.defaults.baseURL.replace('/api', '')}${hostel.images[0].image_url}` : 'https://images.unsplash.com/photo-1555854811-8221a7eaa145?auto=format&fit=crop&q=80&w=800'} 
+                                    src={getImageUrl(hostel.images?.[0]?.image_url, api.defaults.baseURL) || 'https://images.unsplash.com/photo-1555854811-8221a7eaa145?auto=format&fit=crop&q=80&w=800'} 
                                     alt={hostel.name}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 />

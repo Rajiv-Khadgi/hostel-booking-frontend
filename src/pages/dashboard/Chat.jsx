@@ -4,7 +4,8 @@ import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import { socket, connectSocket, disconnectSocket } from '../../utils/socket';
 import { getFriendlyErrorMessage } from '../../utils/errorUtils';
-import { FaPaperPlane, FaPaperclip, FaSearch, FaEllipsisV, FaCircle, FaFilePdf, FaFileWord, FaFileAlt, FaDownload, FaCheck, FaCheckDouble } from 'react-icons/fa';
+import { getImageUrl } from '../../utils/hostelUtils';
+import { FaPaperPlane, FaPaperclip, FaSearch, FaEllipsisV, FaCircle, FaFilePdf, FaFileWord, FaFileAlt, FaDownload, FaCheck, FaCheckDouble, FaFileExcel, FaFilePowerpoint, FaFileArchive } from 'react-icons/fa';
 
 export default function Chat() {
     const { user } = useAuth();
@@ -199,21 +200,23 @@ export default function Chat() {
     });
 
     const getFullImageUrl = (path) => {
-        if (!path) return null;
-        const baseUrl = api.defaults.baseURL.replace('/api', '');
-        return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+        return getImageUrl(path, api.defaults.baseURL);
     };
 
     const isImage = (url) => {
         if (!url) return false;
-        const ext = url.split('.').pop().toLowerCase();
+        const ext = url.split('?')[0].split('.').pop().toLowerCase();
         return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
     };
 
     const getFileIcon = (url) => {
-        const ext = url.split('.').pop().toLowerCase();
+        if (!url) return <FaFileAlt className="text-gray-500 text-2xl" />;
+        const ext = url.split('?')[0].split('.').pop().toLowerCase();
         if (ext === 'pdf') return <FaFilePdf className="text-red-500 text-2xl" />;
         if (['doc', 'docx'].includes(ext)) return <FaFileWord className="text-blue-500 text-2xl" />;
+        if (['xls', 'xlsx'].includes(ext)) return <FaFileExcel className="text-emerald-500 text-2xl" />;
+        if (['ppt', 'pptx'].includes(ext)) return <FaFilePowerpoint className="text-orange-500 text-2xl" />;
+        if (['zip', 'rar', '7z'].includes(ext)) return <FaFileArchive className="text-amber-500 text-2xl" />;
         return <FaFileAlt className="text-gray-500 text-2xl" />;
     };
 

@@ -13,7 +13,6 @@ const STATUS_CONFIG = {
     COMPLETED: { label: 'Completed', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: FiCheckCircle },
     PENDING:   { label: 'Pending',   badge: 'bg-amber-100 text-amber-700 border-amber-200',       icon: FiClock       },
     FAILED:    { label: 'Failed',    badge: 'bg-red-100 text-red-700 border-red-200',             icon: FiXCircle     },
-    REFUNDED:  { label: 'Refunded',  badge: 'bg-gray-100 text-gray-600 border-gray-200',          icon: FiXCircle     },
 };
 
 const TYPE_CONFIG = {
@@ -137,7 +136,7 @@ export default function Payments() {
                             value={search}
                             onChange={setSearch}
                             placeholder="Search hostel, student or transaction…"
-                            className="flex-1 min-w-[200px]"
+                            className="flex-1 min-w-50"
                         />
                         <FilterSelect
                             value={statusFilter}
@@ -282,7 +281,7 @@ export default function Payments() {
 
                                                 {/* Transaction ID */}
                                                 <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                    <p className="font-mono text-xs text-gray-700 truncate max-w-[140px] ml-auto">
+                                                    <p className="font-mono text-xs text-gray-700 truncate max-w-35 ml-auto">
                                                         {payment.transaction_id || payment.pidx || '—'}
                                                     </p>
                                                     {payment.metadata?.merchant_name && (

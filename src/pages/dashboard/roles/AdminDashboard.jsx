@@ -14,7 +14,7 @@ export default function AdminDashboard({ stats }) {
     const formatChartData = useMemo(() => {
         if (!charts.growthTrend) return [];
         return charts.growthTrend.map(d => ({
-            name: new Date(d.month).toLocaleDateString('default', { month: 'short', year: '2-digit' }),
+            name: d.month ? new Date(d.month).toLocaleDateString('default', { month: 'short', year: '2-digit' }) : 'N/A',
             total: Number(d.count || 0)
         }));
     }, [charts.growthTrend]);
@@ -22,7 +22,7 @@ export default function AdminDashboard({ stats }) {
     const formatBookingData = useMemo(() => {
         if (!charts.bookingTrend) return [];
         return charts.bookingTrend.map(d => ({
-            name: new Date(d.month).toLocaleDateString('default', { month: 'short', year: '2-digit' }),
+            name: d.month ? new Date(d.month).toLocaleDateString('default', { month: 'short', year: '2-digit' }) : 'N/A',
             total: Number(d.count || 0)
         }));
     }, [charts.bookingTrend]);
@@ -39,7 +39,7 @@ export default function AdminDashboard({ stats }) {
         { label: 'Avg Revenue/Hostel', value: `Rs. ${(metrics.avgRevenuePerHostel || 0).toLocaleString()}`, unit: '', change: metrics.revenueGrowth },
         { label: 'Revenue Growth', value: metrics.revenueGrowth || 0, unit: '%', change: undefined },
         { label: 'User Growth', value: metrics.userGrowth || 0, unit: '%', change: undefined },
-        { label: 'Total Users', value: ((metrics.totalStudents || 0) + (metrics.totalOwners || 0)).toLocaleString(), unit: '', change: undefined }
+        { label: 'Total Volume', value: `Rs. ${(metrics.totalRevenue || 0).toLocaleString()}`, unit: '', change: undefined }
     ], [metrics]);
 
     return (
