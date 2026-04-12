@@ -1,5 +1,6 @@
 import React from 'react';
 import { FiGrid, FiCamera, FiArrowLeft, FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { getImageUrl } from '../../../utils/hostelUtils';
 
 export default function HostelGallery({ hostel, imgBase, gallery, setGallery, nextImage, prevImage }) {
     const cover = hostel.images?.find(i => i.is_cover) || hostel.images?.[0];
@@ -14,7 +15,7 @@ export default function HostelGallery({ hostel, imgBase, gallery, setGallery, ne
                     <div className="flex h-full gap-1">
                         {/* Cover image — always visible */}
                         <div className={`h-full overflow-hidden ${extras.length > 0 ? 'w-full md:w-1/2' : 'w-full'}`}>
-                            <img src={`${imgBase}${cover.image_url}`} alt={hostel.name}
+                            <img src={getImageUrl(cover.image_url, imgBase)} alt={hostel.name}
                                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
                         </div>
                         {/* 2×2 grid — md+ only */}
@@ -22,7 +23,7 @@ export default function HostelGallery({ hostel, imgBase, gallery, setGallery, ne
                             <div className="hidden md:grid grid-cols-2 grid-rows-2 gap-1 w-1/2 h-full">
                                 {extras.map((img, i) => (
                                     <div key={img.image_id} className="overflow-hidden relative">
-                                        <img src={`${imgBase}${img.image_url}`} alt={`photo ${i + 2}`}
+                                        <img src={getImageUrl(img.image_url, imgBase)} alt={`photo ${i + 2}`}
                                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
                                         {i === 3 && hostel.images.length > 5 && (
                                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -66,7 +67,7 @@ export default function HostelGallery({ hostel, imgBase, gallery, setGallery, ne
                         </button>
                     </div>
                     <div className="flex-1 relative flex items-center justify-center p-4 sm:p-12 overflow-hidden">
-                        <img src={`${imgBase}${hostel.images[gallery.index].image_url}`}
+                        <img src={getImageUrl(hostel.images[gallery.index].image_url, imgBase)}
                             className="max-w-full max-h-full object-contain select-none" alt="" />
                         {hostel.images.length > 1 && (
                             <>

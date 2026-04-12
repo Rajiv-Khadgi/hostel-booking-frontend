@@ -11,15 +11,10 @@ import {
     FiSearch, FiMapPin, FiHome, FiNavigation, FiX,
     FiHeart, FiAlertCircle, FiSliders, FiChevronDown, FiCheck, FiUsers, FiStar
 } from 'react-icons/fi';
-import Pagination from '../components/common/Pagination';
+import HostelCard from '../components/common/HostelCard';
+import { GENDER_CONFIG, avgRating, minPrice, totalBeds } from '../utils/hostelUtils';
 
 /* ─── constants ─── */
-const GENDER_CONFIG = {
-    BOYS: { label: 'Boys Only', Icon: FaMale, badge: 'bg-blue-50 text-blue-600 border-blue-100' },
-    GIRLS: { label: 'Girls Only', Icon: FaFemale, badge: 'bg-pink-50 text-pink-600 border-pink-100' },
-    COED: { label: 'Co-Ed', Icon: FaUserFriends, badge: 'bg-violet-50 text-violet-600 border-violet-100' },
-};
-
 const PRICE_MIN = 0;
 const PRICE_MAX = 30000;
 const PRICE_STEP = 500;
@@ -44,18 +39,6 @@ const BEDS_OPTIONS = [
     { value: 5, label: '5+' },
     { value: 10, label: '10+' },
 ];
-
-/* ─── helpers ─── */
-const avgRating = (reviews) =>
-    reviews?.length
-        ? (reviews.reduce((a, r) => a + Number(r.rating), 0) / reviews.length).toFixed(1)
-        : null;
-
-const minPrice = (rooms) =>
-    rooms?.length ? Math.min(...rooms.map(r => Number(r.price))) : null;
-
-const totalBeds = (rooms) =>
-    rooms?.reduce((a, r) => a + r.available_beds, 0) ?? 0;
 
 const pct = (val) => ((val - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100;
 
@@ -202,6 +185,8 @@ export default function Explore() {
     const [userLoc, setUserLoc] = useState(null);
     const [openFilter, setOpenFilter] = useState(null); // 'budget'|'gender'|'rating'|'beds'|'amenities'|null
     const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const PAGE_SIZE = 12;
 
     const [sortBy, setSortBy] = useState('newest');
@@ -214,16 +199,33 @@ export default function Explore() {
     const [bedsFilter, setBedsFilter] = useState(0);
     const [amenityFilter, setAmenityFilter] = useState(new Set());
 
+    /* Metadata */
+    const [globalAmenities, setGlobalAmenities] = useState([]);
+    const [globalMaxPrice, setGlobalMaxPrice] = useState(PRICE_MAX);
+
     const debouncedSearch = useDebounce(search, 500);
     const debouncedCity = useDebounce(city, 500);
+    const debouncedPriceMin = useDebounce(priceMin, 500);
+    const debouncedPriceMax = useDebounce(priceMax, 500);
 
     const toggleOpen = useCallback((key) =>
         setOpenFilter(prev => prev === key ? null : key), []);
 
     useEffect(() => {
-        fetchHostels();
+        api.get('/hostels/metadata').then(res => {
+            if (res.data.success) {
+                setGlobalAmenities(res.data.amenities || []);
+                setGlobalMaxPrice(res.data.maxPrice || PRICE_MAX);
+                setPriceMax(prev => prev === PRICE_MAX ? (res.data.maxPrice || PRICE_MAX) : prev);
+            }
+        }).catch(() => {});
+        
         if (localStorage.getItem('accessToken')) fetchSavedIds();
-    }, [debouncedSearch, debouncedCity]);
+    }, []);
+
+    useEffect(() => {
+        if (!isNearMe) fetchHostels();
+    }, [debouncedSearch, debouncedCity, genderFilter, debouncedPriceMin, debouncedPriceMax, ratingFilter, bedsFilter, amenityFilter, sortBy, page]);
 
     const fetchSavedIds = async () => {
         try {
@@ -237,10 +239,22 @@ export default function Explore() {
             setLoading(true);
             setIsNearMe(false);
             const params = new URLSearchParams();
-            if (search) params.append('search', search);
-            if (city) params.append('city', city);
+            if (debouncedSearch) params.append('search', debouncedSearch);
+            if (debouncedCity) params.append('city', debouncedCity);
+            if (genderFilter) params.append('gender_type', genderFilter);
+            if (debouncedPriceMin > PRICE_MIN) params.append('minPrice', debouncedPriceMin);
+            if (debouncedPriceMax < globalMaxPrice) params.append('maxPrice', debouncedPriceMax);
+            if (ratingFilter) params.append('rating', ratingFilter);
+            if (bedsFilter > 0) params.append('beds', bedsFilter);
+            if (amenityFilter.size > 0) params.append('amenities', Array.from(amenityFilter).join(','));
+            params.append('sortBy', sortBy);
+            params.append('page', page);
+            params.append('limit', PAGE_SIZE);
+
             const res = await api.get(`/hostels?${params.toString()}`);
             setHostels(res.data.hostels || []);
+            setTotalPages(res.data.totalPages || 1);
+            setTotalItems(res.data.totalItems || 0);
             setError('');
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to load hostels');
@@ -254,6 +268,8 @@ export default function Explore() {
             setLoading(true);
             const res = await api.get(`/hostels/nearby?lat=${lat}&lng=${lng}&radius=${rad}`);
             setHostels(res.data.hostels || []);
+            setTotalPages(1);
+            setTotalItems(res.data.hostels?.length || 0);
             setError('');
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to fetch nearby hostels');
@@ -323,60 +339,12 @@ export default function Explore() {
         });
     };
 
-    /* Unique amenities derived from all hostels */
-    const allAmenities = useMemo(() => {
-        const map = new Map();
-        hostels.forEach(h =>
-            [...(h.amenities || []), ...(h.services || [])].forEach(a => {
-                if (!map.has(a.name)) map.set(a.name, a);
-            })
-        );
-        return [...map.values()];
-    }, [hostels]);
-
-    const budgetActive = priceMin > PRICE_MIN || priceMax < PRICE_MAX;
+    const budgetActive = priceMin > PRICE_MIN || priceMax < globalMaxPrice;
     const hasActiveFilters = !!(genderFilter || budgetActive || ratingFilter || bedsFilter > 0 || amenityFilter.size > 0);
-
-    const filtered = useMemo(() => {
-        let result = hostels.filter(h => {
-            if (genderFilter && h.gender_type !== genderFilter) return false;
-            const mp = minPrice(h.rooms);
-            if (mp !== null && (mp < priceMin || mp > priceMax)) return false;
-            const avg = avgRating(h.reviews);
-            if (ratingFilter && (avg === null || parseFloat(avg) < parseFloat(ratingFilter))) return false;
-            if (bedsFilter > 0 && totalBeds(h.rooms) < bedsFilter) return false;
-            if (amenityFilter.size > 0) {
-                const names = new Set([...(h.amenities || []), ...(h.services || [])].map(a => a.name));
-                for (const n of amenityFilter) if (!names.has(n)) return false;
-            }
-            return true;
-        });
-
-        // Apply Sorting
-        switch (sortBy) {
-            case 'price_asc':
-                result.sort((a, b) => minPrice(a.rooms) - minPrice(b.rooms));
-                break;
-            case 'price_desc':
-                result.sort((a, b) => minPrice(b.rooms) - minPrice(a.rooms));
-                break;
-            case 'rating':
-                result.sort((a, b) => avgRating(b.reviews) - avgRating(a.reviews));
-                break;
-            case 'newest':
-            default:
-                result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        }
-
-        return result;
-    }, [hostels, genderFilter, priceMin, priceMax, ratingFilter, bedsFilter, amenityFilter, sortBy]);
 
     useEffect(() => {
         setPage(1);
-    }, [search, city, isNearMe, genderFilter, priceMin, priceMax, ratingFilter, bedsFilter, amenityFilter]);
-
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-    const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    }, [debouncedSearch, debouncedCity, isNearMe, genderFilter, debouncedPriceMin, debouncedPriceMax, ratingFilter, bedsFilter, amenityFilter]);
 
     const handlePageChange = (p) => {
         setPage(p);
@@ -385,7 +353,7 @@ export default function Explore() {
 
     /* ── Budget pill label ── */
     const budgetLabel = budgetActive
-        ? `Rs. ${priceMin > 0 ? priceMin.toLocaleString() : '0'} – ${priceMax < PRICE_MAX ? priceMax.toLocaleString() : `${PRICE_MAX.toLocaleString()}+`}`
+        ? `Rs. ${priceMin > 0 ? priceMin.toLocaleString() : '0'} – ${priceMax < globalMaxPrice ? priceMax.toLocaleString() : `${globalMaxPrice.toLocaleString()}+`}`
         : 'Budget';
 
     return (
@@ -654,7 +622,7 @@ export default function Explore() {
                         >
                             <p className="text-sm font-semibold text-gray-700 mb-4">Amenities & Services</p>
                             <div className="grid grid-cols-2 gap-2 max-w-sm">
-                                {allAmenities.map(a => (
+                                {globalAmenities.map(a => (
                                     <button
                                         key={a.name}
                                         onClick={() => toggleAmenity(a.name)}
@@ -692,7 +660,7 @@ export default function Explore() {
                         <FiAlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
                         <p className="text-sm text-red-600 font-medium">{error}</p>
                     </div>
-                ) : filtered.length === 0 ? (
+                ) : totalItems === 0 ? (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-14 text-center">
                         <div className="mx-auto flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-50 mb-4">
                             <FiSearch size={22} className="text-emerald-500" />
@@ -723,9 +691,9 @@ export default function Explore() {
                         {/* Toolbar */}
                         <div className="flex items-center justify-between mb-5">
                             <p className="text-sm font-bold text-gray-900 tracking-tight">
-                                {filtered.length} {filtered.length === 1 ? 'verified property' : 'verified properties'} found
-                                {hasActiveFilters && hostels.length !== filtered.length && (
-                                    <span className="text-sm font-semibold text-gray-700"> of {hostels.length} total</span>
+                                {totalItems} {totalItems === 1 ? 'verified property' : 'verified properties'} found
+                                {hasActiveFilters && (
+                                    <span className="text-sm font-semibold text-gray-700"> matching your filters</span>
                                 )}
                             </p>
                             <div className="flex bg-gray-100 rounded-xl p-1 border border-gray-200 gap-0.5">
@@ -747,7 +715,7 @@ export default function Explore() {
                         {viewMode === 'map' ? (
                             <div className="w-full h-150 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
                                 <MapComponent
-                                    hostels={filtered}
+                                    hostels={hostels}
                                     center={userLoc ? [userLoc.lat, userLoc.lng] : [27.7172, 85.3240]}
                                     userLocation={userLoc}
                                     zoom={14}
@@ -762,124 +730,14 @@ export default function Explore() {
                         ) : (
                             <div className="flex flex-col gap-8">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                                    {paginated.map(hostel => {
-                                        const coverImg = hostel.images?.find(i => i.is_cover) || hostel.images?.[0];
-                                        const gender = GENDER_CONFIG[hostel.gender_type] || GENDER_CONFIG.COED;
-                                        const rating = avgRating(hostel.reviews);
-                                        const price = minPrice(hostel.rooms);
-                                        const beds = totalBeds(hostel.rooms);
-                                        const features = [...(hostel.amenities || []), ...(hostel.services || [])].slice(0, 3);
-
-                                        return (
-                                            <Link
-                                                key={hostel.hostel_id}
-                                                to={`/hostels/${hostel.hostel_id}`}
-                                                className="group flex flex-col bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-                                            >
-                                                {/* Image Area — 60% */}
-                                                <div className="relative overflow-hidden bg-gray-100 h-[284px] shrink-0">
-                                                    {coverImg ? (
-                                                        <img
-                                                            src={api.defaults.baseURL.replace('/api', '') + coverImg.image_url}
-                                                            alt={hostel.name}
-                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center bg-gray-200/50">
-                                                            <FiHome size={48} className="text-gray-300" />
-                                                        </div>
-                                                    )}
-
-                                                    {/* Overlays */}
-                                                    <div className="absolute inset-0 bg-linear-to-t from-black/25 via-transparent to-transparent" />
-
-                                                    {/* Top Left: Verified Badge */}
-                                                    <div className="absolute top-4 left-4">
-                                                        <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-sm text-[10px] font-semibold text-gray-900 shadow-sm border border-white/50 tracking-wider uppercase">
-                                                            <FiCheck size={11} className="text-emerald-600 stroke-[3]" />
-                                                            Verified
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Top Right: Wishlist Heart */}
-                                                    <div className="absolute top-4 right-4">
-                                                        <button
-                                                            onClick={e => handleToggleSave(e, hostel.hostel_id)}
-                                                            className="p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-xl border border-white/50 hover:bg-white transition-all active:scale-90 flex items-center justify-center group/heart"
-                                                        >
-                                                            <FiHeart
-                                                                size={16}
-                                                                className={savedIds.has(hostel.hostel_id) ? 'fill-red-500 text-red-500' : 'text-gray-400 group-hover/heart:text-red-400'}
-                                                            />
-                                                        </button>
-                                                    </div>
-
-                                                    {/* Bottom Right: Beds Available Badge */}
-                                                    <div className="absolute bottom-4 right-4">
-                                                        <span className="px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-sm text-[10px] font-semibold text-emerald-700 shadow-sm border border-emerald-50 tracking-wide uppercase">
-                                                            {beds} beds available
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Content Area — 40% */}
-                                                <div className="p-6 flex flex-col flex-1 min-h-[180px] bg-white">
-                                                    {/* Header: Title + Rating */}
-                                                    <div className="flex items-start justify-between gap-3 mb-2">
-                                                        <h3 className="text-lg font-semibold text-gray-900 leading-tight group-hover:text-emerald-700 transition-colors line-clamp-1 tracking-tight">
-                                                            {hostel.name}
-                                                        </h3>
-                                                        {rating && (
-                                                            <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 shrink-0 border border-emerald-100">
-                                                                <span className="text-[10px] font-bold">★</span>
-                                                                <span className="text-[11px] font-semibold">{rating}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Location */}
-                                                    <div className="flex items-center gap-1.5 text-xs text-gray-400 mb-5 font-medium">
-                                                        <FiMapPin size={13} className="shrink-0 text-gray-300" />
-                                                        <span className="truncate">
-                                                            {[hostel.area, hostel.city].filter(Boolean).join(', ') || hostel.address}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Tags: Gender + Top Features */}
-                                                    <div className="flex flex-wrap gap-2">
-                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold border tracking-wide uppercase transition-colors ${gender.badge}`}>
-                                                            <gender.Icon size={12} />
-                                                            {gender.label}
-                                                        </span>
-                                                        {features.map(f => (
-                                                            <AmenityIcon
-                                                                key={f.amenity_id ?? f.service_id ?? f.name}
-                                                                icon={f.icon}
-                                                                name={f.name}
-                                                                variant="pill"
-                                                            />
-                                                        ))}
-                                                    </div>
-
-                                                    {/* Footer: Price + CTA */}
-                                                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                                                        <div className="space-y-0.5">
-                                                            <div className="flex items-baseline gap-1">
-                                                                <span className="text-xl font-bold text-gray-900 tracking-tight">₹{Number(price).toLocaleString()}</span>
-                                                                <span className="text-[10px] text-gray-400 font-medium tracking-tight uppercase">/month</span>
-                                                            </div>
-                                                            <p className="text-[11px] text-gray-400 font-medium mt-1 leading-none">
-                                                                {hostel.reviews?.length || 0} reviews
-                                                            </p>
-                                                        </div>
-                                                        <div className="px-6 py-2.5 bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-emerald-100 hover:shadow-lg hover:bg-emerald-800 transition-all hover:scale-[1.02] active:scale-95">
-                                                            View Details
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </Link>
-                                        );
-                                    })}
+                                    {hostels.map(hostel => (
+                                        <HostelCard 
+                                            key={hostel.hostel_id} 
+                                            hostel={hostel} 
+                                            savedIds={savedIds} 
+                                            handleToggleSave={handleToggleSave} 
+                                        />
+                                    ))}
                                 </div>
 
                                 {/* Pagination */}
@@ -888,7 +746,7 @@ export default function Explore() {
                                         <Pagination
                                             page={page}
                                             totalPages={totalPages}
-                                            totalItems={filtered.length}
+                                            totalItems={totalItems}
                                             pageSize={PAGE_SIZE}
                                             onPageChange={setPage}
                                         />

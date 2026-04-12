@@ -23,7 +23,7 @@ export default function HostelDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const imgBase = api.defaults.baseURL.replace('/api', '');
+    const imgBase = api.defaults.baseURL;
 
     const [hostel, setHostel] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ export default function HostelDetails() {
     const [isSaved, setIsSaved] = useState(false);
     const [activeTab, setActiveTab] = useState('Overview');
 
-    const [bookingModal, setBookingModal] = useState({ isOpen: false, roomId: null, group: null });
+    const [bookingModal, setBookingModal] = useState({ isOpen: false, roomId: null, group: null, room: null, hostelName: '' });
     const [bookingForm, setBookingForm] = useState({ startDate: new Date().toISOString().split('T')[0], months: 6 });
     const [bookingLoading, setBookingLoading] = useState(false);
 
@@ -40,6 +40,7 @@ export default function HostelDetails() {
     const [visitLoading, setVisitLoading] = useState(false);
 
     const [reviews, setReviews] = useState([]);
+    const [myReview, setMyReview] = useState(null);
     const [reviewForm, setReviewForm] = useState({ rating: 5, comments: '' });
     const [submitting, setSubmitting] = useState(false);
     const [confirmDel, setConfirmDel] = useState({ isOpen: false, reviewId: null });
@@ -64,6 +65,36 @@ export default function HostelDetails() {
         try { const r = await api.get(`/hostels/${id}/reviews`); setReviews(r.data.reviews || []); }
         catch { /* non-critical */ }
     };
+
+    const loadMyReview = async () => {
+        if (!user || user.role !== 'student') {
+            setMyReview(null);
+            return;
+        }
+
+        try {
+            const response = await api.get(`/reviews/hostel/${id}/me`);
+            setMyReview(response.data.review || null);
+        } catch (error) {
+            if (error.response?.status !== 404) {
+                console.error('Failed to load my review', error);
+            }
+            setMyReview(null);
+        }
+    };
+
+    useEffect(() => {
+        if (!hostel) return;
+        loadMyReview();
+    }, [hostel, user?.id, user?.role]);
+
+    useEffect(() => {
+        if (myReview) {
+            setReviewForm({ rating: myReview.rating, comments: myReview.comments || '' });
+        } else {
+            setReviewForm({ rating: 5, comments: '' });
+        }
+    }, [myReview]);
 
     const avgRating = useMemo(() =>
         reviews.length ? +(reviews.reduce((a, r) => a + r.rating, 0) / reviews.length).toFixed(1) : null,
@@ -97,7 +128,13 @@ export default function HostelDetails() {
         if (!user) { navigate('/login', { state: { from: `/hostels/${id}` } }); return; }
         if (user.role !== 'student') { toast.error('Only students can request bookings.'); return; }
         const room = group.rooms.find(r => r.available_beds > 0) || group.rooms[0];
-        setBookingModal({ isOpen: true, roomId: room.room_id, group });
+        setBookingModal({
+            isOpen: true,
+            roomId: room.room_id,
+            group,
+            room,
+            hostelName: hostel?.name || ''
+        });
     };
 
     const submitBooking = async (e) => {
@@ -106,7 +143,7 @@ export default function HostelDetails() {
             setBookingLoading(true);
             await api.post('/bookings', { room_id: bookingModal.roomId, start_date: bookingForm.startDate, months: +bookingForm.months });
             toast.success('Booking requested! The owner will review your request.');
-            setBookingModal({ isOpen: false, roomId: null, group: null });
+            setBookingModal({ isOpen: false, roomId: null, group: null, room: null, hostelName: '' });
         } catch (e) { toast.error(getFriendlyErrorMessage(e, 'Failed to request booking.')); }
         finally { setBookingLoading(false); }
     };
@@ -127,9 +164,14 @@ export default function HostelDetails() {
         e.preventDefault();
         try {
             setSubmitting(true);
-            await api.post(`/hostels/${id}/reviews`, reviewForm);
-            setReviewForm({ rating: 5, comments: '' });
-            loadReviews(); toast.success('Review posted!');
+            if (myReview) {
+                await api.put(`/reviews/${myReview.review_id}`, reviewForm);
+                toast.success('Review updated!');
+            } else {
+                await api.post(`/hostels/${id}/reviews`, reviewForm);
+                toast.success('Review posted!');
+            }
+            await Promise.all([loadReviews(), loadMyReview()]);
         } catch (e) { toast.error(getFriendlyErrorMessage(e, 'Failed to post review.')); }
         finally { setSubmitting(false); }
     };
@@ -180,7 +222,7 @@ export default function HostelDetails() {
                         {activeTab === 'Overview' && <OverviewTab hostel={hostel} reviews={reviews} avgRating={avgRating} setActiveTab={setActiveTab} hasMap={hostel.latitude && hostel.longitude} imgBase={imgBase} />}
                         {activeTab === 'Rooms & Pricing' && <RoomsTab grouped={grouped} openBooking={openBooking} />}
                         {activeTab === 'Amenities' && <AmenitiesTab hostel={hostel} />}
-                        {activeTab === 'Reviews' && <ReviewsTab reviews={reviews} avgRating={avgRating} user={user} reviewForm={reviewForm} setReviewForm={setReviewForm} submitting={submitting} submitReview={submitReview} setConfirmDel={setConfirmDel} imgBase={imgBase} />}
+                        {activeTab === 'Reviews' && <ReviewsTab reviews={reviews} avgRating={avgRating} user={user} myReview={myReview} reviewForm={reviewForm} setReviewForm={setReviewForm} submitting={submitting} submitReview={submitReview} setConfirmDel={setConfirmDel} imgBase={imgBase} />}
                     </div>
 
                     <HostelSidebar minPrice={minPrice} setActiveTab={setActiveTab} user={user} navigate={navigate} id={id} setVisitModal={setVisitModal} hostel={hostel} ownerInitials={ownerInitials} ownerName={ownerName} imgBase={imgBase} toggleSave={toggleSave} isSaved={isSaved} startChat={startChat} />

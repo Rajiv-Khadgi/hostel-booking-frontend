@@ -1,8 +1,9 @@
 import React from 'react';
-import { FiClock, FiShield, FiArrowLeft, FiMapPin, FiStar } from 'react-icons/fi';
+import { FiClock, FiShield, FiArrowLeft, FiMapPin, FiStar, FiCheckCircle } from 'react-icons/fi';
 import AmenityIcon from '../../AmenityIcon';
 import MapComponent from '../../MapComponent';
 import { Stars, STAR_PATH } from './Shared';
+import { getImageUrl } from '../../../utils/hostelUtils';
 
 export default function OverviewTab({ hostel, reviews, avgRating, setActiveTab, hasMap, imgBase }) {
     return (
@@ -53,7 +54,7 @@ export default function OverviewTab({ hostel, reviews, avgRating, setActiveTab, 
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                         {hostel.amenities.slice(0, 6).map((item, i) => (
                             <div key={i} className="flex items-center gap-3 p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:border-emerald-200 transition-colors">
-                                <AmenityIcon icon={item.icon} name={item.name} variant="inline" />
+                                <AmenityIcon icon={item.icon} name={item.name} variant="pill" />
                             </div>
                         ))}
                     </div>
@@ -73,7 +74,7 @@ export default function OverviewTab({ hostel, reviews, avgRating, setActiveTab, 
                     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                         {hostel.services.slice(0, 6).map((item, i) => (
                             <div key={i} className="flex items-center gap-3 p-4 rounded-xl border border-gray-100 bg-white shadow-sm hover:border-emerald-200 transition-colors">
-                                <AmenityIcon icon={item.icon} name={item.name} variant="inline" />
+                                <AmenityIcon icon={item.icon} name={item.name} variant="pill" />
                             </div>
                         ))}
                     </div>
@@ -103,12 +104,13 @@ export default function OverviewTab({ hostel, reviews, avgRating, setActiveTab, 
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-800 font-bold shrink-0 overflow-hidden">
                                         {rev.reviewer?.profile_image
-                                            ? <img src={`${imgBase}/${rev.reviewer.profile_image.replace(/^\//, '')}`} className="w-full h-full object-cover" alt="" />
+                                            ? <img src={getImageUrl(rev.reviewer.profile_image, imgBase)} className="w-full h-full object-cover" alt="" />
                                             : <span>{rev.reviewer?.first_name?.[0]}{rev.reviewer?.last_name?.[0]}</span>}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm font-bold text-gray-900">{rev.reviewer?.first_name} {rev.reviewer?.last_name}</span>
+                                            {rev.is_verified && <FiCheckCircle className="text-emerald-500 w-3.5 h-3.5" title="Verified stay" />}
                                         </div>
                                         <Stars n={rev.rating} sz="xs" />
                                     </div>

@@ -1,11 +1,13 @@
 import React from 'react';
 import { FiStar, FiChevronRight, FiCheckCircle, FiX, FiMessageCircle } from 'react-icons/fi';
 import { SectionCard, Stars, STAR_PATH } from './Shared';
+import { getImageUrl } from '../../../utils/hostelUtils';
 
 export default function ReviewsTab({ 
     reviews, 
     avgRating, 
     user, 
+    myReview,
     reviewForm, 
     setReviewForm, 
     submitting, 
@@ -54,7 +56,19 @@ export default function ReviewsTab({
             {/* Form */}
             {user?.role === 'student' && (
                 <SectionCard className="p-7">
-                    <h3 className="text-lg font-bold text-gray-900 mb-5">Share your experience</h3>
+                    <div className="flex items-center justify-between gap-3 mb-5">
+                        <h3 className="text-lg font-bold text-gray-900">{myReview ? 'Edit your review' : 'Share your experience'}</h3>
+                        {myReview?.is_verified && (
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-full uppercase tracking-widest">
+                                Verified stay
+                            </span>
+                        )}
+                    </div>
+                    {myReview && (
+                        <p className="text-xs text-gray-500 mb-4">
+                            You already reviewed this hostel. Update your rating or comments below.
+                        </p>
+                    )}
                     <form onSubmit={submitReview} className="space-y-4">
                         <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
                             <span className="text-sm font-bold text-gray-600">Rating</span>
@@ -78,7 +92,7 @@ export default function ReviewsTab({
                         />
                         <button type="submit" disabled={submitting}
                             className="w-full py-4 bg-gray-900 text-white rounded-2xl font-bold text-sm hover:bg-black disabled:opacity-50 transition-all shadow-lg flex items-center justify-center gap-2">
-                            {submitting ? 'Posting...' : <>Post Public Review <FiChevronRight className="w-4 h-4" /></>}
+                            {submitting ? 'Saving...' : <>{myReview ? 'Update Review' : 'Post Public Review'} <FiChevronRight className="w-4 h-4" /></>}
                         </button>
                     </form>
                 </SectionCard>
@@ -97,17 +111,22 @@ export default function ReviewsTab({
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-800 font-bold border border-emerald-100 overflow-hidden shrink-0">
                                     {rev.reviewer?.profile_image
-                                        ? <img src={`${imgBase}/${rev.reviewer.profile_image.replace(/^\//, '')}`} className="w-full h-full object-cover" alt="" />
+                                        ? <img src={getImageUrl(rev.reviewer.profile_image, imgBase)} className="w-full h-full object-cover" alt="" />
                                         : <span>{rev.reviewer?.first_name?.[0]}{rev.reviewer?.last_name?.[0]}</span>}
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <h4 className="font-bold text-gray-900">{rev.reviewer?.first_name} {rev.reviewer?.last_name}</h4>
                                         {rev.is_verified && <FiCheckCircle className="text-emerald-500 w-3.5 h-3.5" title="Verified stay" />}
+                                        {rev.is_flagged && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full uppercase tracking-widest">Flagged</span>}
                                     </div>
                                     <div className="flex items-center gap-3 mt-0.5">
                                         <Stars n={rev.rating} sz="xs" />
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{new Date(rev.created_at).toLocaleDateString()}</span>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{(() => {
+                                            const createdAtValue = rev.created_at || rev.createdAt;
+                                            const parsed = createdAtValue ? new Date(createdAtValue) : null;
+                                            return parsed && !Number.isNaN(parsed.getTime()) ? parsed.toLocaleDateString() : 'Recently';
+                                        })()}</span>
                                     </div>
                                 </div>
                             </div>

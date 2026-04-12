@@ -5,6 +5,9 @@ import { inputBase } from './Shared';
 export default function BookingModal({ modal, setModal, form, setForm, loading, onSubmit }) {
     if (!modal.isOpen) return null;
 
+    const availableRooms = (modal.group?.rooms || []).filter(r => Number(r.available_beds) > 0);
+    const selectedRoom = modal.room || availableRooms.find(r => r.room_id === modal.roomId) || null;
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
@@ -13,7 +16,7 @@ export default function BookingModal({ modal, setModal, form, setForm, loading, 
                         <h3 className="text-lg font-bold text-gray-900 leading-none">Confirm Booking</h3>
                         <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mt-1.5">Request Reservation</p>
                     </div>
-                    <button onClick={() => setModal({ isOpen: false, roomId: null, group: null })} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                    <button onClick={() => setModal({ isOpen: false, roomId: null, group: null, room: null, hostelName: '' })} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
                         <FiX className="w-5 h-5" />
                     </button>
                 </div>
@@ -24,9 +27,42 @@ export default function BookingModal({ modal, setModal, form, setForm, loading, 
                         </div>
                         <div>
                             <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-0.5">Selected Unit</p>
-                            <p className="text-sm font-bold text-gray-900">{modal.group?.room_type} Sharing Room</p>
+                            <p className="text-sm font-bold text-gray-900">
+                                {selectedRoom?.room_number
+                                    ? `Room ${selectedRoom.room_number}`
+                                    : modal.group?.room_type
+                                        ? `${modal.group.room_type} Sharing Room`
+                                        : 'Selected Room'}
+                            </p>
+                            {modal.hostelName && (
+                                <p className="text-[11px] text-gray-500 font-medium mt-1 truncate">
+                                    {modal.hostelName}
+                                </p>
+                            )}
                         </div>
                     </div>
+
+                    {availableRooms.length > 1 && (
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Choose Room</label>
+                            <select
+                                value={modal.roomId || ''}
+                                onChange={(e) => {
+                                    const nextRoomId = Number(e.target.value);
+                                    const nextRoom = availableRooms.find(r => r.room_id === nextRoomId) || null;
+                                    setModal(prev => ({ ...prev, roomId: nextRoomId, room: nextRoom }));
+                                }}
+                                className={inputBase}
+                                required
+                            >
+                                {availableRooms.map((room) => (
+                                    <option key={room.room_id} value={room.room_id}>
+                                        {room.room_number ? `Room ${room.room_number}` : `Room #${room.room_id}`} - {room.available_beds} beds available
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>

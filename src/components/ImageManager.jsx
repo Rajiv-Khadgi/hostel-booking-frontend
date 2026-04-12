@@ -3,6 +3,7 @@ import api from '../api/axios';
 import toast from 'react-hot-toast';
 import ConfirmModal from './common/ConfirmModal';
 import { getFriendlyErrorMessage } from '../utils/errorUtils';
+import { getImageUrl } from '../utils/hostelUtils';
 
 /**
  * ImageManager
@@ -113,7 +114,7 @@ export default function ImageManager({ entityId, maxImages }) {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
                         {images.map((img) => (
                             <div key={img.image_id} className="relative group h-32 w-full rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
-                                <img src={api.defaults.baseURL.replace('/api', '') + img.image_url} alt="Property setup" className="object-cover w-full h-full" />
+                                <img src={getImageUrl(img.image_url, api.defaults.baseURL)} alt="Property setup" className="object-cover w-full h-full" />
                                 {img.is_cover && <span className="absolute top-2 left-2 bg-emerald-600/90 px-2 py-0.5 rounded text-[10px] uppercase font-bold text-white shadow-sm pointer-events-none z-10">COVER</span>}
                                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 gap-2">
                                     {!img.is_cover && (

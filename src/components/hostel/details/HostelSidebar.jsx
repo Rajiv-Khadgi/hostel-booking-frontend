@@ -1,4 +1,5 @@
 import React from 'react';
+import toast from 'react-hot-toast';
 import { FiCheckCircle, FiCalendar, FiHeart, FiLock, FiZap, FiMessageCircle } from 'react-icons/fi';
 
 export default function HostelSidebar({
@@ -17,7 +18,7 @@ export default function HostelSidebar({
     startChat
 }) {
     return (
-        <div className="w-full lg:w-[440px] shrink-0">
+        <div className="w-full lg:w-110 shrink-0">
             <div className="sticky top-24">
                 <div className="bg-white rounded-3xl border border-gray-200 shadow-xl shadow-gray-100/60 p-6 space-y-5">
 
@@ -41,7 +42,17 @@ export default function HostelSidebar({
                             <FiCheckCircle className="w-4 h-4 opacity-80" /> Reserve Spot
                         </button>
                         <button
-                            onClick={() => { if (!user) { navigate('/login', { state: { from: `/hostels/${id}` } }); return; } setVisitModal({ isOpen: true }); }}
+                            onClick={() => {
+                                if (!user) {
+                                    navigate('/login', { state: { from: `/hostels/${id}` } });
+                                    return;
+                                }
+                                if (user.role !== 'student') {
+                                    toast.error('Only students can schedule visits.');
+                                    return;
+                                }
+                                setVisitModal({ isOpen: true });
+                            }}
                             className="w-full group flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-2xl font-bold text-sm hover:bg-emerald-100 transition-all">
                             <FiCalendar className="w-4 h-4" /> Schedule Visit
                         </button>
