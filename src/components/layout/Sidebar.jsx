@@ -16,6 +16,7 @@ import {
     FaCreditCard
 } from 'react-icons/fa';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { getImageUrl } from '../../utils/hostelUtils';
 
 export default function Sidebar({ isCollapsed, onToggleCollapse, isMobileOpen, onMobileClose }) {
     const { user, logout } = useAuth();
@@ -23,7 +24,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, isMobileOpen, o
 
     const getAvatarUrl = () => {
         if (user?.profile_image) {
-            return api.defaults.baseURL.replace('/api', '') + '/' + user.profile_image;
+            return getImageUrl(user.profile_image, api.defaults.baseURL);
         }
         return `https://ui-avatars.com/api/?name=${user?.first_name}+${user?.last_name}&background=10b981&color=fff&size=50`;
     };
@@ -39,9 +40,10 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, isMobileOpen, o
     ];
 
     const ownerLinks = [
-        { name: 'Dashboard',         path: '/dashboard/owner',          icon: FaChartLine },
+        { name: 'Dashboard',         path: '/dashboard',                icon: FaChartLine, exact: true },
         { name: 'My Hostels',        path: '/dashboard/hostels',        icon: FaBuilding },
         { name: 'Property Reviews',  path: '/dashboard/hostel-reviews', icon: FaStar },
+        { name: 'Saved Hostels',     path: '/dashboard/saved',          icon: FaHeart },
         { name: 'Rooms',             path: '/dashboard/rooms',          icon: FaBed },
         { name: 'Bookings',          path: '/dashboard/bookings',       icon: FaCalendarAlt },
         { name: 'Scheduled Visits',  path: '/dashboard/visits',         icon: FaCalendarCheck },
@@ -50,10 +52,11 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, isMobileOpen, o
     ];
 
     const adminLinks = [
-        { name: 'Dashboard',      path: '/dashboard',               icon: FaChartLine },
+        { name: 'Dashboard',      path: '/dashboard',               icon: FaChartLine, exact: true },
         { name: 'Manage Users',   path: '/dashboard/admin/users',   icon: FaUser },
         { name: 'Manage Hostels', path: '/dashboard/admin/hostels', icon: FaBuilding },
         { name: 'Manage Reviews', path: '/dashboard/admin/reviews', icon: FaStar },
+        { name: 'Saved Hostels',  path: '/dashboard/saved',         icon: FaHeart },
         { name: 'All Payments',   path: '/dashboard/payments',      icon: FaCreditCard },
         { name: 'All Bookings',   path: '/dashboard/bookings',      icon: FaCalendarAlt },
         { name: 'Chats',          path: '/dashboard/chat',          icon: FaComments },

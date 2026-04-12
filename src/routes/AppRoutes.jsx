@@ -8,6 +8,8 @@ import ProtectedRoute from './ProtectedRoute';
 // Public Pages
 import Home from '../pages/Home';
 import Explore from '../pages/Explore';
+import About from '../pages/About';
+import Contact from '../pages/Contact';
 import HostelDetails from '../pages/HostelDetails';
 import Login from '../pages/Login';
 import StudentRegister from '../pages/StudentRegister';
@@ -42,6 +44,8 @@ export default function AppRoutes() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/explore" element={<Explore />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/hostels/:id" element={<HostelDetails />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
