@@ -1,40 +1,65 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import api from '../../api/axios';
 import { FaCheckCircle, FaExclamationTriangle, FaArrowLeft, FaSpinner } from 'react-icons/fa';
 
 export default function PaymentCallback() {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
     const [status, setStatus] = useState('verifying'); // verifying, success, error
     const [message, setMessage] = useState('Verifying your payment with Khalti...');
-    const [details, setDetails] = useState(null);
+    const [resolvedPidx, setResolvedPidx] = useState('');
+    const [callbackIncomplete, setCallbackIncomplete] = useState(false);
 
     const pidx = searchParams.get('pidx');
     const transactionId = searchParams.get('transaction_id');
     const amount = searchParams.get('amount');
-    const mobile = searchParams.get('mobile');
-    const purchaseOrderId = searchParams.get('purchase_order_id');
     const purchaseOrderName = searchParams.get('purchase_order_name');
 
+    const resolvePidx = () => {
+        const queryPidx = searchParams.get('pidx');
+        if (queryPidx) return queryPidx;
+
+        // Some providers put values in URL hash instead of query string.
+        const hash = window.location.hash || '';
+        const hashContent = hash.startsWith('#') ? hash.slice(1) : hash;
+        const hashParams = new URLSearchParams(hashContent.includes('?') ? hashContent.split('?')[1] : hashContent);
+        const hashPidx = hashParams.get('pidx');
+        if (hashPidx) return hashPidx;
+
+        const storedPidx = sessionStorage.getItem('lastPaymentPidx');
+        return storedPidx || '';
+    };
+
     useEffect(() => {
-        if (!pidx) {
+        const nextPidx = resolvePidx();
+        if (!nextPidx) {
             setStatus('error');
-            setMessage('Invalid request. Payment ID (pidx) is missing.');
+            setCallbackIncomplete(true);
+            setMessage('Payment callback is incomplete (missing payment ID). Please check your booking status and retry verification from the booking page.');
             return;
         }
 
-        verifyPayment();
+        setResolvedPidx(nextPidx);
+        verifyPayment(nextPidx);
     }, [pidx]);
 
-    const verifyPayment = async () => {
+    const verifyPayment = async (pidxToVerify = resolvedPidx) => {
+        if (!pidxToVerify) {
+            setStatus('error');
+            setCallbackIncomplete(true);
+            setMessage('Payment callback is incomplete (missing payment ID).');
+            return;
+        }
+
         try {
-            const response = await api.get(`/payments/verify?pidx=${pidx}`);
+            setStatus('verifying');
+            setCallbackIncomplete(false);
+            const response = await api.get(`/payments/verify?pidx=${pidxToVerify}`);
             
             if (response.data.success) {
                 setStatus('success');
                 setMessage('Payment Successful! Your booking has been confirmed.');
-                setDetails(response.data);
+                sessionStorage.removeItem('lastPaymentPidx');
             } else {
                 setStatus('error');
                 setMessage(response.data.message || 'Payment verification failed.');
@@ -99,10 +124,12 @@ export default function PaymentCallback() {
                         </div>
                         <h2 className="mt-8 text-2xl font-bold text-gray-900">Payment Failed</h2>
                         <p className="mt-2 text-red-600 font-medium">{message}</p>
-                        
-                        <p className="mt-6 text-sm text-gray-500">
-                            If your amount was deducted, please don't worry. It will be refunded within 24 hours or you can contact support.
-                        </p>
+
+                        {!callbackIncomplete && (
+                            <p className="mt-6 text-sm text-gray-500">
+                                If your amount was deducted, please don't worry. It will be refunded within 24 hours or you can contact support.
+                            </p>
+                        )}
 
                         <div className="mt-8 flex gap-3 w-full">
                             <Link 
@@ -112,7 +139,7 @@ export default function PaymentCallback() {
                                 <FaArrowLeft className="text-xs" /> Back
                             </Link>
                             <button 
-                                onClick={verifyPayment} 
+                                onClick={() => verifyPayment()} 
                                 className="flex-1 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all"
                             >
                                 Try Again
