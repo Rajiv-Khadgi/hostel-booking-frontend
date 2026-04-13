@@ -195,28 +195,30 @@ export default function Bookings() {
                             defaultLabel="All Payments"
                             className="w-full sm:w-auto"
                         />
-                        <div className="flex items-center gap-2 px-3 py-1 bg-gray-50/50 hover:bg-gray-50 transition-colors rounded-xl border border-gray-100/50">
-                            <span className="flex items-center gap-1 text-xs font-medium text-gray-500">
-                                <FiCalendar size={13} className="text-gray-400" /> Start:
+                        <div className="flex flex-col sm:flex-row items-center gap-2 px-3 py-2 sm:py-1 bg-gray-50/50 hover:bg-gray-50 transition-colors rounded-xl border border-gray-100/50 w-full sm:w-auto">
+                            <span className="flex items-center gap-1 text-xs font-semibold text-gray-500 shrink-0">
+                                <FiCalendar size={13} className="text-gray-400" /> Date Range:
                             </span>
-                            <input
-                                type="date"
-                                value={dateFrom}
-                                onChange={e => setDateFrom(e.target.value)}
-                                className="px-2 py-1.5 rounded-lg border-0 bg-transparent text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
-                            />
-                            <span className="text-xs text-gray-400 font-medium">to</span>
-                            <input
-                                type="date"
-                                value={dateTo}
-                                min={dateFrom}
-                                onChange={e => setDateTo(e.target.value)}
-                                className="px-2 py-1.5 rounded-lg border-0 bg-transparent text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
-                            />
+                            <div className="flex items-center gap-2 w-full">
+                                <input
+                                    type="date"
+                                    value={dateFrom}
+                                    onChange={e => setDateFrom(e.target.value)}
+                                    className="flex-1 sm:w-28 px-2 py-1.5 rounded-lg border-0 bg-transparent text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium min-w-0"
+                                />
+                                <span className="text-xs text-gray-400 font-bold">→</span>
+                                <input
+                                    type="date"
+                                    value={dateTo}
+                                    min={dateFrom}
+                                    onChange={e => setDateTo(e.target.value)}
+                                    className="flex-1 sm:w-28 px-2 py-1.5 rounded-lg border-0 bg-transparent text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium min-w-0"
+                                />
+                            </div>
                             {(dateFrom || dateTo) && (
                                 <button
                                     onClick={() => { setDateFrom(''); setDateTo(''); }}
-                                    className="ml-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded-lg transition-colors active:scale-95"
+                                    className="sm:ml-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors active:scale-95 whitespace-nowrap"
                                 >
                                     Clear
                                 </button>
@@ -250,7 +252,104 @@ export default function Bookings() {
             ) : (
                 <>
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="overflow-x-auto">
+                        {/* Mobile View (Cards) */}
+                        <div className="block md:hidden">
+                            <div className="grid grid-cols-1 divide-y divide-gray-100">
+                                {paginated.map(booking => {
+                                    const sc = STATUS_CONFIG[booking.status] || STATUS_CONFIG.REQUESTED;
+                                    const pc = PAYMENT_STATUS_CONFIG[booking.payment_status] || PAYMENT_STATUS_CONFIG.UNPAID;
+                                    return (
+                                        <div key={booking.booking_id} className="p-4 flex flex-col gap-4">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 shrink-0 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 font-bold">
+                                                        {booking.room?.hostel?.name?.[0]?.toUpperCase() || 'H'}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-gray-900 leading-tight">{booking.room?.hostel?.name}</p>
+                                                        <p className="text-xs text-gray-400 mt-0.5">{booking.room?.room_type} · #{booking.room?.room_number}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-1.5">
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${sc.badge}`}>
+                                                        {sc.label}
+                                                    </span>
+                                                    {booking.payment_status && (
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${pc.badge}`}>
+                                                            {pc.label}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4 bg-gray-50/50 p-3 rounded-xl border border-gray-100">
+                                                <div>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Duration</p>
+                                                    <div className="flex items-center gap-1.5 text-xs text-gray-700 font-medium">
+                                                        <FiCalendar size={12} className="text-emerald-500" />
+                                                        {new Date(booking.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - {new Date(booking.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                                    </div>
+                                                </div>
+                                                {isOwner && (
+                                                    <div>
+                                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Student</p>
+                                                        <p className="text-xs font-semibold text-gray-900 truncate">
+                                                            {booking.student?.first_name} {booking.student?.last_name}
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center justify-between mt-1">
+                                                <div>
+                                                    {!isOwner && (booking.status === 'APPROVED' || booking.status === 'CONFIRMED') && booking.payment_status !== 'PAID' && (
+                                                        <p className="text-[10px] text-gray-400 font-bold">
+                                                            Paid Rs. {(booking.payments?.filter(p => p.status === 'COMPLETED').reduce((a, p) => a + Number(p.amount), 0) || 0).toLocaleString()}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    {isOwner ? (
+                                                        booking.status === 'REQUESTED' && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => setConfirmAction({ isOpen: true, bookingId: booking.booking_id, status: 'APPROVED' })}
+                                                                    disabled={actionLoading === booking.booking_id}
+                                                                    className="px-3 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 transition-all active:scale-95"
+                                                                >
+                                                                    Approve
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setConfirmAction({ isOpen: true, bookingId: booking.booking_id, status: 'REJECTED' })}
+                                                                    disabled={actionLoading === booking.booking_id}
+                                                                    className="px-3 py-2 rounded-xl text-xs font-bold text-red-600 bg-red-50 border border-red-100 transition-all active:scale-95"
+                                                                >
+                                                                    Reject
+                                                                </button>
+                                                            </>
+                                                        )
+                                                    ) : (
+                                                        (booking.status === 'APPROVED' || booking.status === 'CONFIRMED') && booking.payment_status !== 'PAID' && (
+                                                            <div className="flex gap-1.5">
+                                                                <button onClick={() => handlePayment(booking.booking_id, 'MONTHLY')} className="px-3 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                                    Monthly
+                                                                </button>
+                                                                <button onClick={() => handlePayment(booking.booking_id, 'BALANCE')} className="px-3 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-sm border border-emerald-600">
+                                                                    Pay Balance
+                                                                </button>
+                                                            </div>
+                                                        )
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Desktop View (Table) */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-100">
                                 <thead>
                                     <tr className="bg-gray-50">

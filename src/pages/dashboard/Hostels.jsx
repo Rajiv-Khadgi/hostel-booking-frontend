@@ -199,10 +199,13 @@ export default function Hostels() {
                 </div>
             ) : (
                 <div className="flex flex-col gap-6">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <h3 className="text-sm font-semibold text-gray-700">
-                            {filteredHostels.length} {filteredHostels.length === 1 ? 'property' : 'properties'} found
-                        </h3>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                            <span className="w-1.5 h-6 bg-emerald-500 rounded-full" />
+                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-tight">
+                                {filteredHostels.length} {filteredHostels.length === 1 ? 'property' : 'properties'} found
+                            </h3>
+                        </div>
                         <SearchBar
                             value={search}
                             onChange={setSearch}

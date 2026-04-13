@@ -117,7 +117,76 @@ export default function AdminUsers() {
                 <div className="bg-red-50 text-red-600 p-4 rounded-xl text-center border border-red-100">{error}</div>
             ) : (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="overflow-x-auto">
+                    {/* Mobile View (Cards) */}
+                    <div className="block md:hidden">
+                        <div className="grid grid-cols-1 divide-y divide-gray-100">
+                            {paginatedUsers.map((u) => (
+                                <div key={u.user_id} className="p-4 flex flex-col gap-4">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center">
+                                            <div className="h-12 w-12 shrink-0 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 font-bold overflow-hidden border border-emerald-100">
+                                                {u.profile_image ? (
+                                                    <img src={getImageUrl(u.profile_image, api.defaults.baseURL)} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <FaUser size={18} />
+                                                )}
+                                            </div>
+                                            <div className="ml-4">
+                                                <div className="text-base font-bold text-gray-900">{u.first_name} {u.last_name}</div>
+                                                <div className="text-xs text-gray-400">Joined {new Date(u.createdAt).toLocaleDateString()}</div>
+                                            </div>
+                                        </div>
+                                        <span className={`px-2 py-1 rounded-lg font-bold text-[10px] uppercase tracking-wider ${u.role === 'owner' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                            {u.role}
+                                        </span>
+                                    </div>
+
+                                    <div className="bg-gray-50/50 p-3 rounded-2xl border border-gray-100 space-y-2">
+                                        <div className="flex items-center gap-3 text-xs text-gray-600">
+                                            <FaEnvelope size={12} className="text-gray-400 shrink-0" />
+                                            <span className="truncate">{u.email}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-xs text-gray-600">
+                                            <FaPhone size={12} className="text-gray-400 shrink-0" />
+                                            <span>{u.phone || 'N/A'}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between mt-1">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold capitalize border ${getStatusStyle(u.status)}`}>
+                                            {u.status}
+                                        </span>
+                                        <div className="flex gap-2">
+                                            {u.status === 'active' ? (
+                                                <button 
+                                                    onClick={() => handleStatusUpdate(u.user_id, 'suspended')}
+                                                    className="w-9 h-9 flex items-center justify-center text-amber-600 bg-amber-50 rounded-xl transition-all active:scale-90"
+                                                >
+                                                    <FaUserSlash size={14} />
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => handleStatusUpdate(u.user_id, 'active')}
+                                                    className="w-9 h-9 flex items-center justify-center text-emerald-600 bg-emerald-50 rounded-xl transition-all active:scale-90"
+                                                >
+                                                    <FaUserCheck size={14} />
+                                                </button>
+                                            )}
+                                            <button 
+                                                onClick={() => u.status !== 'deleted' && setConfirmAction({ isOpen: true, userId: u.user_id, status: 'deleted' })}
+                                                className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-90 ${u.status === 'deleted' ? 'text-gray-300 bg-gray-50' : 'text-red-600 bg-red-50 hover:bg-red-100'}`}
+                                            >
+                                                <FaTrash size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Desktop View (Table) */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>

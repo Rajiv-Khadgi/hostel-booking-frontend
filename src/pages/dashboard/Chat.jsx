@@ -2,43 +2,63 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
-import { socket, connectSocket, disconnectSocket } from '../../utils/socket';
+import { socket, connectSocket } from '../../utils/socket';
 import { getFriendlyErrorMessage } from '../../utils/errorUtils';
 import { getImageUrl } from '../../utils/hostelUtils';
 import { FaPaperPlane, FaPaperclip, FaSearch, FaEllipsisV, FaCircle, FaFilePdf, FaFileWord, FaFileAlt, FaDownload, FaCheck, FaCheckDouble, FaFileExcel, FaFilePowerpoint, FaFileArchive } from 'react-icons/fa';
 
 export default function Chat() {
     const { user } = useAuth();
+    const currentUserId = Number(user?.id ?? user?.user_id);
     const [conversations, setConversations] = useState([]);
     const [activeConversation, setActiveConversation] = useState(null);
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [loading, setLoading] = useState(true);
     const [searching, setSearching] = useState('');
-    const [uploading, setUploading] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState(new Set());
+    const [showChatView, setShowChatView] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
+    const activeConversationRef = useRef(null);
 
     useEffect(() => {
+        activeConversationRef.current = activeConversation;
+    }, [activeConversation]);
+
+    useEffect(() => {
+        if (!user || !Number.isInteger(currentUserId)) {
+            setLoading(false);
+            return;
+        }
+
         fetchConversations();
         connectSocket();
 
-        // Identify user to track online status
-        if (user) {
-            socket.emit('identify', user.id);
+        const identifyUser = () => {
+            socket.emit('identify', currentUserId);
+        };
+
+        if (socket.connected) {
+            identifyUser();
+        } else {
+            socket.once('connect', identifyUser);
         }
 
         socket.on('receive_message', (message) => {
+            const activeConversationState = activeConversationRef.current;
+            const senderId = Number(message.sender_id);
+
             // Only add if it belongs to the active conversation
             setMessages(prev => {
-                if (activeConversation && message.conversation_id === activeConversation.conversation_id) {
+                if (activeConversationState && message.conversation_id === activeConversationState.conversation_id) {
                     // Automatically mark as read if it's currently active and not from me
-                    if (message.sender_id !== user.id) {
+                    if (senderId !== currentUserId) {
                         socket.emit('mark_read', {
-                            conversationId: activeConversation.conversation_id,
-                            userId: user.id
+                            conversationId: activeConversationState.conversation_id,
+                            userId: currentUserId
                         });
                     }
                     return [...prev, message];
@@ -50,8 +70,8 @@ export default function Chat() {
             setConversations(prev => {
                 return prev.map(conv => {
                     if (conv.conversation_id === message.conversation_id) {
-                        const isNotActive = activeConversation?.conversation_id !== message.conversation_id;
-                        const isFromOthers = message.sender_id !== user.id;
+                        const isNotActive = activeConversationState?.conversation_id !== message.conversation_id;
+                        const isFromOthers = senderId !== currentUserId;
                         
                         return {
                             ...conv,
@@ -66,26 +86,30 @@ export default function Chat() {
         });
 
         socket.on('user_status_change', ({ userId, status }) => {
+            const normalizedUserId = String(userId);
             setOnlineUsers(prev => {
                 const newSet = new Set(prev);
-                if (status === 'online') newSet.add(userId);
-                else newSet.delete(userId);
+                if (status === 'online') newSet.add(normalizedUserId);
+                else newSet.delete(normalizedUserId);
                 return newSet;
             });
         });
 
         socket.on('messages_read', ({ conversationId, readerId }) => {
-            if (activeConversation && conversationId === activeConversation.conversation_id) {
+            const activeConversationState = activeConversationRef.current;
+            const normalizedReaderId = Number(readerId);
+
+            if (activeConversationState && conversationId === activeConversationState.conversation_id) {
                 setMessages(prev => prev.map(msg =>
-                    msg.sender_id !== readerId ? { ...msg, is_read: true } : msg
+                    Number(msg.sender_id) !== normalizedReaderId ? { ...msg, is_read: true } : msg
                 ));
             }
 
             setConversations(prev => prev.map(conv => {
                 if (conv.conversation_id === conversationId) {
-                    const isReaderMe = readerId === user.id;
-                    const updatedMessages = conv.messages.map(msg =>
-                        msg.sender_id !== readerId ? { ...msg, is_read: true } : msg
+                    const isReaderMe = normalizedReaderId === currentUserId;
+                    const updatedMessages = (conv.messages || []).map(msg =>
+                        Number(msg.sender_id) !== normalizedReaderId ? { ...msg, is_read: true } : msg
                     );
                     return { 
                         ...conv, 
@@ -98,25 +122,25 @@ export default function Chat() {
         });
 
         return () => {
+            socket.off('connect', identifyUser);
             socket.off('receive_message');
             socket.off('user_status_change');
             socket.off('messages_read');
-            disconnectSocket();
         };
-    }, [activeConversation, user]);
+    }, [user, currentUserId]);
 
     useEffect(() => {
-        if (activeConversation) {
+        if (activeConversation && Number.isInteger(currentUserId)) {
             fetchMessages(activeConversation.conversation_id);
             socket.emit('join_conversation', activeConversation.conversation_id);
 
             // Mark all existing as read
             socket.emit('mark_read', {
                 conversationId: activeConversation.conversation_id,
-                userId: user.id
+                userId: currentUserId
             });
         }
-    }, [activeConversation, user]);
+    }, [activeConversation, currentUserId]);
 
     useEffect(() => {
         scrollToBottom();
@@ -153,7 +177,7 @@ export default function Chat() {
 
         const messageData = {
             conversationId: activeConversation.conversation_id,
-            senderId: user.id,
+            senderId: currentUserId,
             content: newMessage
         };
 
@@ -174,7 +198,7 @@ export default function Chat() {
 
             const messageData = {
                 conversationId: activeConversation.conversation_id,
-                senderId: user.id,
+                senderId: currentUserId,
                 content: `Sent a file: ${file.name}`,
                 attachmentUrl: res.data.fileUrl
             };
@@ -188,10 +212,10 @@ export default function Chat() {
     };
 
     const getChatPartner = (conv) => {
-        return conv.participant1_id === user.id ? conv.participant2 : conv.participant1;
+        return Number(conv.participant1_id) === currentUserId ? conv.participant2 : conv.participant1;
     };
 
-    const isUserOnline = (userId) => onlineUsers.has(userId);
+    const isUserOnline = (userId) => onlineUsers.has(String(userId));
 
     const filteredConversations = conversations.filter(conv => {
         const partner = getChatPartner(conv);
@@ -231,7 +255,7 @@ export default function Chat() {
     return (
         <div className="flex h-[calc(100vh-140px)] bg-white rounded-3xl shadow-xl shadow-gray-200/50 overflow-hidden border border-gray-100">
             {/* Sidebar - Conversations List */}
-            <div className="w-full md:w-80 border-r border-gray-100 flex flex-col bg-gray-50/30">
+            <div className={`${showChatView ? 'hidden' : 'flex'} md:flex w-full md:w-80 border-r border-gray-100 flex-col bg-gray-50/30`}>
                 <div className="p-6">
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Messages</h2>
                     <div className="relative">
@@ -257,7 +281,10 @@ export default function Chat() {
                             return (
                                 <button
                                     key={conv.conversation_id}
-                                    onClick={() => setActiveConversation(conv)}
+                                    onClick={() => {
+                                        setActiveConversation(conv);
+                                        setShowChatView(true);
+                                    }}
                                     className={`w-full flex items-center gap-4 p-4 rounded-3xl transition-all ${isActive
                                         ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200'
                                         : 'hover:bg-white hover:shadow-sm text-gray-600'
@@ -320,12 +347,21 @@ export default function Chat() {
             </div>
 
             {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col bg-white">
+            <div className={`${!showChatView ? 'hidden' : 'flex'} md:flex flex-1 flex-col bg-white`}>
                 {activeConversation ? (
                     <>
                         {/* Chat Header */}
-                        <div className="h-20 px-8 border-b border-gray-100 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                        <div className="h-20 px-4 md:px-8 border-b border-gray-100 flex items-center justify-between">
+                            <div className="flex items-center gap-2 md:gap-4">
+                                {/* Mobile Back Button */}
+                                <button 
+                                    onClick={() => setShowChatView(false)}
+                                    className="md:hidden p-2 -ml-2 text-gray-400 hover:text-emerald-600 transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
                                 <div className="w-10 h-10 rounded-xl overflow-hidden bg-emerald-100">
                                     {getChatPartner(activeConversation).profile_image ? (
                                         <img
@@ -356,7 +392,7 @@ export default function Chat() {
                         {/* Messages Area */}
                         <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-gray-50/30 custom-scrollbar">
                             {messages.map((msg, index) => {
-                                const isMe = msg.sender_id === user.id;
+                                const isMe = Number(msg.sender_id) === currentUserId;
 
                                 return (
                                     <div key={msg.message_id || index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>

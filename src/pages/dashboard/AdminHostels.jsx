@@ -112,20 +112,20 @@ export default function AdminHostels() {
                     <p className="text-gray-500 mt-2">Manage all properties listed on the platform and monitor compliance.</p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-4 bg-white/80 backdrop-blur-md p-2 border border-gray-200 rounded-2xl shadow-sm w-fit">
+                <div className="flex flex-col md:flex-row items-center gap-4 bg-white/80 backdrop-blur-md p-2 border border-gray-200 rounded-2xl shadow-sm w-full md:w-fit overflow-x-auto custom-scrollbar">
                     <SearchBar 
                         value={search}
                         onChange={setSearch}
                         placeholder="Search properties or owners..."
-                        className="w-full sm:min-w-[280px]"
+                        className="w-full md:min-w-[280px]"
                     />
-                    <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
-                    <div className="flex items-center gap-1">
+                    <div className="h-8 w-px bg-gray-200 hidden md:block"></div>
+                    <div className="flex items-center gap-1 shrink-0">
                         {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map((f) => (
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${filter === f ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' : 'text-gray-500 hover:bg-gray-50'}`}
+                                className={`px-4 py-2 rounded-xl text-[10px] sm:text-xs font-bold transition-all whitespace-nowrap ${filter === f ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' : 'text-gray-500 hover:bg-gray-50'}`}
                             >
                                 {f}
                             </button>

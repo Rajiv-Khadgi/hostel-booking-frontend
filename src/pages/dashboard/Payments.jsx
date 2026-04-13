@@ -153,28 +153,30 @@ export default function Payments() {
                             defaultLabel="All Types"
                             className="w-full sm:w-auto"
                         />
-                        <div className="flex items-center gap-2 px-3 py-1 bg-gray-50/50 hover:bg-gray-50 transition-colors rounded-xl border border-gray-100/50">
-                            <span className="flex items-center gap-1 text-xs font-medium text-gray-500">
-                                <FiCalendar size={13} className="text-gray-400" /> Date:
+                        <div className="flex flex-col sm:flex-row items-center gap-2 px-3 py-2 sm:py-1 bg-gray-50/50 hover:bg-gray-50 transition-colors rounded-xl border border-gray-100/50 w-full sm:w-auto">
+                            <span className="flex items-center gap-1 text-xs font-semibold text-gray-500 shrink-0">
+                                <FiCalendar size={13} className="text-gray-400" /> Date Range:
                             </span>
-                            <input
-                                type="date"
-                                value={dateFrom}
-                                onChange={e => setDateFrom(e.target.value)}
-                                className="px-2 py-1.5 rounded-lg border-0 bg-transparent text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
-                            />
-                            <span className="text-xs text-gray-400 font-medium">to</span>
-                            <input
-                                type="date"
-                                value={dateTo}
-                                min={dateFrom}
-                                onChange={e => setDateTo(e.target.value)}
-                                className="px-2 py-1.5 rounded-lg border-0 bg-transparent text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium"
-                            />
+                            <div className="flex items-center gap-2 w-full">
+                                <input
+                                    type="date"
+                                    value={dateFrom}
+                                    onChange={e => setDateFrom(e.target.value)}
+                                    className="flex-1 sm:w-28 px-2 py-1.5 rounded-lg border-0 bg-transparent text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium min-w-0"
+                                />
+                                <span className="text-xs text-gray-400 font-bold">→</span>
+                                <input
+                                    type="date"
+                                    value={dateTo}
+                                    min={dateFrom}
+                                    onChange={e => setDateTo(e.target.value)}
+                                    className="flex-1 sm:w-28 px-2 py-1.5 rounded-lg border-0 bg-transparent text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium min-w-0"
+                                />
+                            </div>
                             {(dateFrom || dateTo) && (
                                 <button
                                     onClick={() => { setDateFrom(''); setDateTo(''); }}
-                                    className="ml-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded-lg transition-colors active:scale-95"
+                                    className="sm:ml-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors active:scale-95 whitespace-nowrap"
                                 >
                                     Clear
                                 </button>
@@ -208,7 +210,59 @@ export default function Payments() {
             ) : (
                 <>
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div className="overflow-x-auto">
+                        {/* Mobile View (Cards) */}
+                        <div className="block md:hidden">
+                            <div className="grid grid-cols-1 divide-y divide-gray-100">
+                                {paginated.map(payment => {
+                                    const sc = STATUS_CONFIG[payment.status] || STATUS_CONFIG.PENDING;
+                                    const tc = TYPE_CONFIG[payment.payment_type] || TYPE_CONFIG.FULL;
+                                    const StatusIcon = sc.icon;
+                                    return (
+                                        <div key={payment.payment_id} className="p-4 flex flex-col gap-4">
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-10 w-10 shrink-0 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                                                        <FiCreditCard size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-gray-900 leading-tight truncate max-w-[150px]">
+                                                            {isOwner || isAdmin
+                                                                ? `${payment.booking?.student?.first_name || ''} ${payment.booking?.student?.last_name || ''}`
+                                                                : payment.booking?.room?.hostel?.name || `Booking #${payment.booking_id}`}
+                                                        </p>
+                                                        <p className="text-[10px] text-gray-400 font-medium mt-0.5">
+                                                            {new Date(payment.createdAt).toLocaleDateString('en-GB')} · {new Date(payment.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-bold text-gray-900">Rs. {Number(payment.amount).toLocaleString()}</p>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wide">{payment.payment_method}</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between py-2 border-y border-gray-50">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wide ${tc.badge}`}>
+                                                        {tc.label}
+                                                    </span>
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${sc.badge}`}>
+                                                        <StatusIcon size={10} />
+                                                        {sc.label}
+                                                    </span>
+                                                </div>
+                                                <p className="font-mono text-[10px] text-gray-400">
+                                                    ID: {payment.transaction_id || payment.pidx || '—'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Desktop View (Table) */}
+                        <div className="hidden md:block overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-100">
                                 <thead>
                                     <tr className="bg-gray-50">
