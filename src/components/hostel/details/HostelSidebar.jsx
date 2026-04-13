@@ -15,7 +15,8 @@ export default function HostelSidebar({
     imgBase,
     toggleSave,
     isSaved,
-    startChat
+    startChat,
+    canMessageOwner
 }) {
     return (
         <div className="w-full lg:w-110 shrink-0">
@@ -76,13 +77,15 @@ export default function HostelSidebar({
                                     <p className="text-[11px] text-gray-500 font-medium whitespace-nowrap">Property Owner & Customer Consultant</p>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={startChat}
-                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-50 text-gray-700 rounded-xl font-bold text-xs hover:bg-gray-100 transition-colors">
-                                    <FiMessageCircle className="w-3.5 h-3.5" /> Message Owner
-                                </button>
-                            </div>
+                            {canMessageOwner && (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={startChat}
+                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-50 text-gray-700 rounded-xl font-bold text-xs hover:bg-gray-100 transition-colors">
+                                        <FiMessageCircle className="w-3.5 h-3.5" /> Message Owner
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 

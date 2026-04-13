@@ -12,6 +12,7 @@ import {
     FiHeart, FiAlertCircle, FiSliders, FiChevronDown, FiCheck, FiUsers, FiStar
 } from 'react-icons/fi';
 import HostelCard from '../components/common/HostelCard';
+import Pagination from '../components/common/Pagination';
 import { GENDER_CONFIG, avgRating, minPrice, totalBeds } from '../utils/hostelUtils';
 
 /* ─── constants ─── */
@@ -123,7 +124,7 @@ function FilterPill({ label, active, open, onClick, onClear, icon: Icon, childre
         <div ref={ref} className="relative">
             <button
                 onClick={onClick}
-                className={`inline-flex items-center gap-5.5 px-5 py-4 rounded-full border text-sm font-medium transition-all select-none shadow-xs ${active || open
+                className={`inline-flex items-center gap-2.5 px-4 sm:px-5 py-3 sm:py-4 rounded-full border text-xs sm:text-sm font-medium transition-all select-none shadow-xs whitespace-nowrap ${active || open
                     ? 'border-emerald-600 text-gray-900 bg-emerald-50/50 ring-1 ring-emerald-100'
                     : 'border-gray-200 text-gray-900 bg-white hover:border-gray-300 hover:shadow-sm'
                     }`}
@@ -146,11 +147,20 @@ function FilterPill({ label, active, open, onClick, onClear, icon: Icon, childre
                 )}
             </button>
 
-            {/* Dropdown panel — Glassmorphism */}
+            {/* Dropdown panel — Responsive Positioning */}
             {open && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 z-50 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/50 min-w-80 p-6 animate-in fade-in zoom-in duration-200">
+                <div className="fixed sm:absolute top-1/2 sm:top-full left-1/2 -translate-x-1/2 -translate-y-1/2 sm:translate-y-0 mt-0 sm:mt-4 z-[100] sm:z-50 bg-white sm:bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-2xl shadow-2xl border border-gray-100 sm:border-white/50 w-[90vw] sm:min-w-80 sm:w-auto p-6 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between mb-4 sm:hidden bg-gray-50 -mx-6 -mt-6 p-4 rounded-t-2xl border-b border-gray-100">
+                        <span className="font-bold text-gray-800">{label}</span>
+                        <button onClick={onClick} className="p-1 rounded-full hover:bg-gray-200 text-gray-400"><FiX size={18} /></button>
+                    </div>
                     {children}
                 </div>
+            )}
+            
+            {/* Mobile-only backdrop for open filter */}
+            {open && (
+                <div className="sm:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[90]" onClick={onClick} />
             )}
         </div>
     );
@@ -424,22 +434,22 @@ export default function Explore() {
                             )}
 
                             {/* Actions */}
-                            <div className="flex items-center gap-2 p-1 w-full sm:w-auto">
+                            <div className="flex items-center gap-2 p-1 w-full sm:w-auto mt-2 sm:mt-0">
                                 <button
                                     type="button"
                                     onClick={handleNearMe}
                                     title={isNearMe ? 'Cancel' : 'Search near me'}
-                                    className={`p-3 rounded-xl transition-all ${isNearMe
+                                    className={`p-3.5 sm:p-3 rounded-xl transition-all ${isNearMe
                                         ? 'bg-red-50 text-red-500 border border-red-100 shadow-sm'
-                                        : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 border border-transparent'
+                                        : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 border border-transparent flex-1 sm:flex-none flex items-center justify-center'
                                         }`}
                                 >
-                                    {isNearMe ? <FiX size={18} /> : <FiNavigation size={18} />}
+                                    {isNearMe ? <FiX size={18} /> : <div className="flex items-center gap-2"><FiNavigation size={18} /><span className="sm:hidden text-sm font-semibold">Near Me</span></div>}
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isNearMe}
-                                    className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-emerald-700/20 transition-all disabled:opacity-40 text-sm tracking-wide"
+                                    className="flex-[2] sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3.5 sm:py-3 rounded-xl shadow-lg shadow-emerald-700/20 transition-all disabled:opacity-40 text-sm tracking-wide"
                                 >
                                     Search
                                 </button>
@@ -461,191 +471,193 @@ export default function Explore() {
                 {/* ── Filter Bar ── */}
                 <div className="flex flex-col items-center gap-6 mb-12">
                     {/* Interactive Pills + Clear */}
-                    <div className="flex flex-wrap items-center justify-center gap-7">
-                        {/* Sort By */}
-                        <FilterPill
-                            label={SORT_OPTIONS.find(o => o.value === sortBy)?.label}
-                            icon={SORT_OPTIONS.find(o => o.value === sortBy)?.icon}
-                            active={sortBy !== 'newest'}
-                            open={openFilter === 'sort'}
-                            onClick={() => toggleOpen('sort')}
-                        >
-                            <p className="text-sm font-semibold text-gray-700 mb-3">Sort Results By</p>
-                            <div className="grid grid-cols-1 gap-1">
-                                {SORT_OPTIONS.map(o => (
-                                    <button
-                                        key={o.value}
-                                        onClick={() => { setSortBy(o.value); setOpenFilter(null); }}
-                                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${sortBy === o.value
-                                            ? 'bg-emerald-50 text-emerald-700'
-                                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                                            }`}
-                                    >
-                                        <o.icon size={14} className={sortBy === o.value ? 'text-emerald-600' : 'text-gray-300'} />
-                                        {o.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </FilterPill>
-
-                        {/* Budget */}
-                        <FilterPill
-                            label={budgetLabel}
-                            icon={FiSliders}
-                            active={budgetActive}
-                            open={openFilter === 'budget'}
-                            onClick={() => toggleOpen('budget')}
-                            onClear={() => { setPriceMin(PRICE_MIN); setPriceMax(PRICE_MAX); }}
-                        >
-                            <p className="text-sm font-semibold text-gray-700 mb-5">Budget Range</p>
-                            <div className="mb-6 px-1">
-                                <DualRangeSlider
-                                    min={PRICE_MIN} max={PRICE_MAX} step={PRICE_STEP}
-                                    valueMin={priceMin} valueMax={priceMax}
-                                    onChangeMin={setPriceMin} onChangeMax={setPriceMax}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 mb-6">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Min Price</label>
-                                    <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100 focus-within:border-emerald-300 transition-colors">
-                                        <span className="text-xs font-bold text-gray-400">₹</span>
-                                        <input
-                                            type="number"
-                                            value={priceMin}
-                                            onChange={e => setPriceMin(Math.max(0, parseInt(e.target.value) || 0))}
-                                            className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-sm font-bold text-gray-800 p-0"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Max Price</label>
-                                    <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100 focus-within:border-emerald-300 transition-colors">
-                                        <span className="text-xs font-bold text-gray-400">₹</span>
-                                        <input
-                                            type="number"
-                                            value={priceMax}
-                                            onChange={e => setPriceMax(Math.min(PRICE_MAX, parseInt(e.target.value) || 0))}
-                                            className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-sm font-bold text-gray-800 p-0"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                                <button onClick={() => { setPriceMin(PRICE_MIN); setPriceMax(PRICE_MAX); }} className="text-xs font-bold text-gray-400 hover:text-red-500 uppercase tracking-wide">Reset</button>
-                                <button onClick={() => setOpenFilter(null)} className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-700/10 uppercase tracking-wide">Apply</button>
-                            </div>
-                        </FilterPill>
-
-                        {/* Gender */}
-                        <FilterPill
-                            label={genderFilter ? GENDER_CONFIG[genderFilter]?.label : 'Gender'}
-                            icon={genderFilter ? GENDER_CONFIG[genderFilter]?.Icon : FiUsers}
-                            active={!!genderFilter}
-                            open={openFilter === 'gender'}
-                            onClick={() => toggleOpen('gender')}
-                            onClear={() => setGenderFilter('')}
-                        >
-                            <p className="text-sm font-semibold text-gray-700 mb-4">Gender Preference</p>
-                            <div className="grid grid-cols-1 gap-2">
-                                <SegPill active={!genderFilter} onClick={() => setGenderFilter('')}>Everyone</SegPill>
-                                {Object.entries(GENDER_CONFIG).map(([key, cfg]) => (
-                                    <button
-                                        key={key}
-                                        onClick={() => setGenderFilter(genderFilter === key ? '' : key)}
-                                        className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border transition-all ${genderFilter === key
-                                            ? `${cfg.badge.replace('bg-', 'bg-').split(' ')[0]} border-emerald-200 shadow-sm shadow-emerald-600/5`
-                                            : 'bg-gray-50 border-transparent text-gray-500 hover:bg-white hover:border-gray-200'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-xl ${genderFilter === key ? 'bg-white' : 'bg-gray-200/50'}`}>
-                                                <cfg.Icon size={16} />
-                                            </div>
-                                            <span className="text-sm font-bold">{cfg.label}</span>
-                                        </div>
-                                        {genderFilter === key && <FiCheck size={16} className="text-emerald-600" />}
-                                    </button>
-                                ))}
-                            </div>
-                        </FilterPill>
-
-                        {/* Rating */}
-                        <FilterPill
-                            label={ratingFilter ? `${ratingFilter}★ & above` : 'Rating'}
-                            icon={FiStar}
-                            active={!!ratingFilter}
-                            open={openFilter === 'rating'}
-                            onClick={() => toggleOpen('rating')}
-                            onClear={() => setRatingFilter('')}
-                        >
-                            <p className="text-sm font-semibold text-gray-700 mb-4">Hostel Rating</p>
-                            <div className="flex flex-wrap gap-2">
-                                {RATING_OPTIONS.map(o => (
-                                    <SegPill key={o.value} active={ratingFilter === o.value} onClick={() => setRatingFilter(o.value)}>
-                                        <div className="flex items-center gap-1.5">
-                                            {o.value && <FiStar size={12} className={ratingFilter === o.value ? 'fill-emerald-600 text-emerald-600' : 'text-gray-300'} />}
-                                            {o.label}
-                                        </div>
-                                    </SegPill>
-                                ))}
-                            </div>
-                        </FilterPill>
-
-                        {/* Beds */}
-                        <FilterPill
-                            label={bedsFilter > 0 ? `${bedsFilter}+ Beds` : 'Capacity'}
-                            icon={FiHome}
-                            active={bedsFilter > 0}
-                            open={openFilter === 'beds'}
-                            onClick={() => toggleOpen('beds')}
-                            onClear={() => setBedsFilter(0)}
-                        >
-                            <p className="text-sm font-semibold text-gray-700 mb-4">Minimum Bed Capacity</p>
-                            <div className="flex flex-wrap gap-2">
-                                {BEDS_OPTIONS.map(o => (
-                                    <SegPill key={o.value} active={bedsFilter === o.value} onClick={() => setBedsFilter(o.value)}>
-                                        {o.label} beds
-                                    </SegPill>
-                                ))}
-                            </div>
-                        </FilterPill>
-
-                        {/* More Filters / Amenities */}
-                        <FilterPill
-                            label={amenityFilter.size > 0 ? `Features (${amenityFilter.size})` : 'Amenities'}
-                            icon={FiSliders}
-                            active={amenityFilter.size > 0}
-                            open={openFilter === 'amenities'}
-                            onClick={() => toggleOpen('amenities')}
-                            onClear={() => setAmenityFilter(new Set())}
-                        >
-                            <p className="text-sm font-semibold text-gray-700 mb-4">Amenities & Services</p>
-                            <div className="grid grid-cols-2 gap-2 max-w-sm">
-                                {globalAmenities.map(a => (
-                                    <button
-                                        key={a.name}
-                                        onClick={() => toggleAmenity(a.name)}
-                                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-[11px] font-bold transition-all ${amenityFilter.has(a.name)
-                                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]'
-                                            : 'bg-white text-gray-500 border-gray-100 hover:border-emerald-300 hover:text-emerald-600'
-                                            }`}
-                                    >
-                                        <AmenityIcon icon={a.icon} name={a.name} variant="pill" />
-                                    </button>
-                                ))}
-                            </div>
-                        </FilterPill>
-
-                        {/* Clear Action — Now Inline */}
-                        {hasActiveFilters && (
-                            <button
-                                onClick={clearFilters}
-                                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-gray-200 bg-white text-sm font-bold text-gray-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50/50 transition-all shadow-xs"
+                    <div className="w-full relative px-4">
+                        <div className="flex overflow-x-auto lg:overflow-visible items-center lg:justify-center gap-3 sm:gap-7 pb-4 sm:pb-0 no-scrollbar">
+                            {/* Sort By */}
+                            <FilterPill
+                                label={SORT_OPTIONS.find(o => o.value === sortBy)?.label}
+                                icon={SORT_OPTIONS.find(o => o.value === sortBy)?.icon}
+                                active={sortBy !== 'newest'}
+                                open={openFilter === 'sort'}
+                                onClick={() => toggleOpen('sort')}
                             >
-                                <FiX size={15} /> Clear All
-                            </button>
-                        )}
+                                <p className="text-sm font-semibold text-gray-700 mb-3">Sort Results By</p>
+                                <div className="grid grid-cols-1 gap-1">
+                                    {SORT_OPTIONS.map(o => (
+                                        <button
+                                            key={o.value}
+                                            onClick={() => { setSortBy(o.value); setOpenFilter(null); }}
+                                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${sortBy === o.value
+                                                ? 'bg-emerald-50 text-emerald-700'
+                                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                                                }`}
+                                        >
+                                            <o.icon size={14} className={sortBy === o.value ? 'text-emerald-600' : 'text-gray-300'} />
+                                            {o.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </FilterPill>
+
+                            {/* Budget */}
+                            <FilterPill
+                                label={budgetLabel}
+                                icon={FiSliders}
+                                active={budgetActive}
+                                open={openFilter === 'budget'}
+                                onClick={() => toggleOpen('budget')}
+                                onClear={() => { setPriceMin(PRICE_MIN); setPriceMax(PRICE_MAX); }}
+                            >
+                                <p className="text-sm font-semibold text-gray-700 mb-5">Budget Range</p>
+                                <div className="mb-6 px-1">
+                                    <DualRangeSlider
+                                        min={PRICE_MIN} max={PRICE_MAX} step={PRICE_STEP}
+                                        valueMin={priceMin} valueMax={priceMax}
+                                        onChangeMin={setPriceMin} onChangeMax={setPriceMax}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 mb-6">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Min Price</label>
+                                        <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100 focus-within:border-emerald-300 transition-colors">
+                                            <span className="text-xs font-bold text-gray-400">₹</span>
+                                            <input
+                                                type="number"
+                                                value={priceMin}
+                                                onChange={e => setPriceMin(Math.max(0, parseInt(e.target.value) || 0))}
+                                                className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-sm font-bold text-gray-800 p-0"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Max Price</label>
+                                        <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 rounded-xl border border-gray-100 focus-within:border-emerald-300 transition-colors">
+                                            <span className="text-xs font-bold text-gray-400">₹</span>
+                                            <input
+                                                type="number"
+                                                value={priceMax}
+                                                onChange={e => setPriceMax(Math.min(PRICE_MAX, parseInt(e.target.value) || 0))}
+                                                className="w-full bg-transparent border-none focus:outline-none focus:ring-0 text-sm font-bold text-gray-800 p-0"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                                    <button onClick={() => { setPriceMin(PRICE_MIN); setPriceMax(PRICE_MAX); }} className="text-xs font-bold text-gray-400 hover:text-red-500 uppercase tracking-wide">Reset</button>
+                                    <button onClick={() => setOpenFilter(null)} className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-700/10 uppercase tracking-wide">Apply</button>
+                                </div>
+                            </FilterPill>
+
+                            {/* Gender */}
+                            <FilterPill
+                                label={genderFilter ? GENDER_CONFIG[genderFilter]?.label : 'Gender'}
+                                icon={genderFilter ? GENDER_CONFIG[genderFilter]?.Icon : FiUsers}
+                                active={!!genderFilter}
+                                open={openFilter === 'gender'}
+                                onClick={() => toggleOpen('gender')}
+                                onClear={() => setGenderFilter('')}
+                            >
+                                <p className="text-sm font-semibold text-gray-700 mb-4">Gender Preference</p>
+                                <div className="grid grid-cols-1 gap-2">
+                                    <SegPill active={!genderFilter} onClick={() => setGenderFilter('')}>Everyone</SegPill>
+                                    {Object.entries(GENDER_CONFIG).map(([key, cfg]) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setGenderFilter(genderFilter === key ? '' : key)}
+                                            className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border transition-all ${genderFilter === key
+                                                ? `${cfg.badge.replace('bg-', 'bg-').split(' ')[0]} border-emerald-200 shadow-sm shadow-emerald-600/5`
+                                                : 'bg-gray-50 border-transparent text-gray-500 hover:bg-white hover:border-gray-200'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-xl ${genderFilter === key ? 'bg-white' : 'bg-gray-200/50'}`}>
+                                                    <cfg.Icon size={16} />
+                                                </div>
+                                                <span className="text-sm font-bold">{cfg.label}</span>
+                                            </div>
+                                            {genderFilter === key && <FiCheck size={16} className="text-emerald-600" />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </FilterPill>
+
+                            {/* Rating */}
+                            <FilterPill
+                                label={ratingFilter ? `${ratingFilter}★ & above` : 'Rating'}
+                                icon={FiStar}
+                                active={!!ratingFilter}
+                                open={openFilter === 'rating'}
+                                onClick={() => toggleOpen('rating')}
+                                onClear={() => setRatingFilter('')}
+                            >
+                                <p className="text-sm font-semibold text-gray-700 mb-4">Hostel Rating</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {RATING_OPTIONS.map(o => (
+                                        <SegPill key={o.value} active={ratingFilter === o.value} onClick={() => setRatingFilter(o.value)}>
+                                            <div className="flex items-center gap-1.5">
+                                                {o.value && <FiStar size={12} className={ratingFilter === o.value ? 'fill-emerald-600 text-emerald-600' : 'text-gray-300'} />}
+                                                {o.label}
+                                            </div>
+                                        </SegPill>
+                                    ))}
+                                </div>
+                            </FilterPill>
+
+                            {/* Beds */}
+                            <FilterPill
+                                label={bedsFilter > 0 ? `${bedsFilter}+ Beds` : 'Capacity'}
+                                icon={FiHome}
+                                active={bedsFilter > 0}
+                                open={openFilter === 'beds'}
+                                onClick={() => toggleOpen('beds')}
+                                onClear={() => setBedsFilter(0)}
+                            >
+                                <p className="text-sm font-semibold text-gray-700 mb-4">Minimum Bed Capacity</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {BEDS_OPTIONS.map(o => (
+                                        <SegPill key={o.value} active={bedsFilter === o.value} onClick={() => setBedsFilter(o.value)}>
+                                            {o.label} beds
+                                        </SegPill>
+                                    ))}
+                                </div>
+                            </FilterPill>
+
+                            {/* More Filters / Amenities */}
+                            <FilterPill
+                                label={amenityFilter.size > 0 ? `Features (${amenityFilter.size})` : 'Amenities'}
+                                icon={FiSliders}
+                                active={amenityFilter.size > 0}
+                                open={openFilter === 'amenities'}
+                                onClick={() => toggleOpen('amenities')}
+                                onClear={() => setAmenityFilter(new Set())}
+                            >
+                                <p className="text-sm font-semibold text-gray-700 mb-4">Amenities & Services</p>
+                                <div className="grid grid-cols-2 gap-2 max-w-sm">
+                                    {globalAmenities.map(a => (
+                                        <button
+                                            key={a.name}
+                                            onClick={() => toggleAmenity(a.name)}
+                                            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-[11px] font-bold transition-all ${amenityFilter.has(a.name)
+                                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-[1.02]'
+                                                : 'bg-white text-gray-500 border-gray-100 hover:border-emerald-300 hover:text-emerald-600'
+                                                }`}
+                                        >
+                                            <AmenityIcon icon={a.icon} name={a.name} variant="pill" />
+                                        </button>
+                                    ))}
+                                </div>
+                            </FilterPill>
+
+                            {/* Clear Action — Now Inline */}
+                            {hasActiveFilters && (
+                                <button
+                                    onClick={clearFilters}
+                                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-gray-200 bg-white text-xs sm:text-sm font-bold text-gray-400 hover:text-red-500 hover:border-red-100 hover:bg-red-50/50 transition-all shadow-xs whitespace-nowrap"
+                                >
+                                    <FiX size={15} /> Clear All
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -756,6 +768,30 @@ export default function Explore() {
                         )}
                     </>
                 )}
+            </div>
+
+            {/* Floating View Toggle for Mobile */}
+            <div className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-40 transform active:scale-95 transition-transform">
+                <button
+                    onClick={() => {
+                        const nextMode = viewMode === 'map' ? 'list' : 'map';
+                        setViewMode(nextMode);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="flex items-center gap-2.5 px-6 py-3.5 bg-gray-900 text-white rounded-full font-bold shadow-2xl shadow-gray-900/40 text-sm whitespace-nowrap border border-gray-800"
+                >
+                    {viewMode === 'map' ? (
+                        <div className="flex items-center gap-2">
+                             <FiLayout size={18} className="text-emerald-400" />
+                             <span>Show List Results</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                             <FiMapPin size={18} className="text-emerald-400" />
+                             <span>Show Map Explorer</span>
+                        </div>
+                    )}
+                </button>
             </div>
         </div>
     );

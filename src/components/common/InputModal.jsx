@@ -41,7 +41,7 @@ export default function InputModal({
 
     return (
         <Transition.Root show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-[100]" onClose={onClose}>
+            <Dialog as="div" className="relative z-[9999]" onClose={onClose}>
                 <Transition.Child
                     as={Fragment}
                     enter="ease-out duration-300"
@@ -81,7 +81,7 @@ export default function InputModal({
                                                 </p>
                                                 <textarea
                                                     rows={4}
-                                                    className="block w-full rounded-xl border-0 py-2.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 sm:text-sm sm:leading-6 focus:outline-none transition-all px-3"
+                                                    className="block w-full rounded-xl border-0 py-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-emerald-600 text-base sm:text-sm sm:leading-6 focus:outline-none transition-all px-3"
                                                     placeholder={placeholder}
                                                     value={value}
                                                     onChange={(e) => setValue(e.target.value)}

@@ -184,8 +184,11 @@ export default function HostelDetails() {
 
     const startChat = async () => {
         if (!user) { navigate('/login', { state: { from: `/hostels/${id}` } }); return; }
+        if (user.role === 'admin') { toast.error('Admin chat is disabled.'); return; }
+        if (user.role === 'owner') { toast.error('Owners cannot message other owners from listings.'); return; }
+        if (Number(user.id) === Number(hostel.user_id)) { toast.error('You cannot message your own listing.'); return; }
         try { await api.post('/chat/conversations', { targetUserId: hostel.user_id }); navigate('/dashboard/chat'); }
-        catch { toast.error('Failed to start chat'); }
+        catch (error) { toast.error(getFriendlyErrorMessage(error, 'Failed to start chat')); }
     };
 
     const nextImage = () => setGallery(g => ({ ...g, index: (g.index + 1) % hostel.images.length }));
@@ -225,7 +228,7 @@ export default function HostelDetails() {
                         {activeTab === 'Reviews' && <ReviewsTab reviews={reviews} avgRating={avgRating} user={user} myReview={myReview} reviewForm={reviewForm} setReviewForm={setReviewForm} submitting={submitting} submitReview={submitReview} setConfirmDel={setConfirmDel} imgBase={imgBase} />}
                     </div>
 
-                    <HostelSidebar minPrice={minPrice} setActiveTab={setActiveTab} user={user} navigate={navigate} id={id} setVisitModal={setVisitModal} hostel={hostel} ownerInitials={ownerInitials} ownerName={ownerName} imgBase={imgBase} toggleSave={toggleSave} isSaved={isSaved} startChat={startChat} />
+                    <HostelSidebar minPrice={minPrice} setActiveTab={setActiveTab} user={user} navigate={navigate} id={id} setVisitModal={setVisitModal} hostel={hostel} ownerInitials={ownerInitials} ownerName={ownerName} imgBase={imgBase} toggleSave={toggleSave} isSaved={isSaved} startChat={startChat} canMessageOwner={!user || user.role === 'student'} />
                 </div>
             </div>
 

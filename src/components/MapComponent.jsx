@@ -85,7 +85,7 @@ export default function MapComponent({
     }
 
     return (
-        <div style={{ height, width: "100%", zIndex: 0 }} className="rounded-xl overflow-hidden shadow-sm border border-gray-200 z-0">
+        <div style={{ height, width: "100%", zIndex: 0 }} className="relative rounded-xl overflow-hidden shadow-sm border border-gray-200 z-0">
             <style>{`
                 .custom-tooltip {
                     background: white !important;

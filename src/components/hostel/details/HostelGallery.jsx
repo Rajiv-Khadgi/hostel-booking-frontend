@@ -9,8 +9,8 @@ export default function HostelGallery({ hostel, imgBase, gallery, setGallery, ne
     if (!hostel) return null;
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-            <div className="relative rounded-3xl overflow-hidden bg-gray-100 aspect-[21/9] sm:aspect-[21/7] shadow-lg group">
+        <div className="max-w-7xl mx-auto px-0 sm:px-6 lg:px-8 sm:mt-6">
+            <div className="relative sm:rounded-3xl overflow-hidden bg-gray-100 aspect-[4/3] sm:aspect-[21/7] shadow-lg group">
                 {hostel.images?.length > 0 ? (
                     <div className="flex h-full gap-1">
                         {/* Cover image — always visible */}
@@ -46,10 +46,10 @@ export default function HostelGallery({ hostel, imgBase, gallery, setGallery, ne
                 {/* Show All Photos button */}
                 {hostel.images?.length > 0 && (
                     <button onClick={() => setGallery({ isOpen: true, index: 0 })}
-                        className="absolute bottom-5 right-5 z-10 flex items-center gap-2 px-4 py-2.5 bg-white/95 backdrop-blur-sm shadow-xl rounded-2xl text-gray-900 text-sm font-bold border border-white/60 hover:bg-white hover:scale-105 transition-all">
+                        className="absolute bottom-4 right-4 sm:bottom-5 sm:right-5 z-10 flex items-center gap-2 px-4 py-2 bg-white/95 backdrop-blur-sm shadow-xl rounded-xl text-gray-900 text-xs sm:text-sm font-bold border border-white/60 hover:bg-white hover:scale-105 transition-all">
                         <FiGrid className="w-4 h-4 text-emerald-600" />
                         <span className="hidden sm:inline">Show all photos</span>
-                        <span className="sm:hidden">{hostel.images.length} photos</span>
+                        <span className="sm:hidden">{hostel.images.length} Photos</span>
                     </button>
                 )}
             </div>
