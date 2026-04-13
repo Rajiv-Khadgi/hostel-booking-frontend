@@ -59,7 +59,6 @@ export default function Sidebar({ isCollapsed, onToggleCollapse, isMobileOpen, o
         { name: 'Saved Hostels',  path: '/dashboard/saved',         icon: FaHeart },
         { name: 'All Payments',   path: '/dashboard/payments',      icon: FaCreditCard },
         { name: 'All Bookings',   path: '/dashboard/bookings',      icon: FaCalendarAlt },
-        { name: 'Chats',          path: '/dashboard/chat',          icon: FaComments },
     ];
 
     const getMenu = () => {

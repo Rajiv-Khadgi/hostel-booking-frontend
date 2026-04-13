@@ -64,9 +64,12 @@ export default function AppRoutes() {
             <Route path="profile" element={<Profile />} />
             <Route path="bookings" element={<Bookings />} />
             <Route path="payments" element={<Payments />} />
-            <Route path="chat" element={<Chat />} />
             <Route path="saved" element={<SavedHostels />} />
             <Route path="visits" element={<Visits />} />
+
+            <Route element={<ProtectedRoute allowedRoles={['student', 'owner']} />}>
+              <Route path="chat" element={<Chat />} />
+            </Route>
 
             {/* Owner Only Routes */}
             <Route element={<ProtectedRoute allowedRoles={['owner']} />}>

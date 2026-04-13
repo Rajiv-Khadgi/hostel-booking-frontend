@@ -161,7 +161,7 @@ export default function Login() {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`appearance-none block w-full pl-11 pr-4 py-3 border ${errors.email ? 'border-red-300 ring-1 ring-red-500' : 'border-gray-200'} rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50 hover:bg-white focus:bg-white`}
+                  className={`appearance-none block w-full pl-11 pr-4 py-3 border ${errors.email ? 'border-red-300 ring-1 ring-red-500' : 'border-gray-200'} rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50 hover:bg-white focus:bg-white text-base`}
                 />
               </div>
               {errors.email && <p className="mt-1.5 text-xs text-red-500 ml-1">{errors.email}</p>}
@@ -180,7 +180,7 @@ export default function Login() {
                   autoComplete="current-password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`appearance-none block w-full pl-11 pr-4 py-3 border ${errors.password ? 'border-red-300 ring-1 ring-red-500' : 'border-gray-200'} rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50 hover:bg-white focus:bg-white`}
+                  className={`appearance-none block w-full pl-11 pr-4 py-3 border ${errors.password ? 'border-red-300 ring-1 ring-red-500' : 'border-gray-200'} rounded-xl shadow-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-gray-50 hover:bg-white focus:bg-white text-base`}
                 />
               </div>
               {errors.password && <p className="mt-1.5 text-xs text-red-500 ml-1">{errors.password}</p>}

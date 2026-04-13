@@ -3,6 +3,16 @@ import api from '../api/axios';
 
 export const AuthContext = createContext(null);
 
+const normalizeUser = (rawUser) => {
+    if (!rawUser) return null;
+
+    const normalizedId = rawUser.id ?? rawUser.user_id;
+    return {
+        ...rawUser,
+        id: normalizedId
+    };
+};
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -15,7 +25,7 @@ export const AuthProvider = ({ children }) => {
                 try {
                     // Try to fetch profile to verify token
                     const { data } = await api.get('/profile');
-                    setUser(data.user || data); // Depending on your profile endpoint's response format
+                    setUser(normalizeUser(data.user || data)); // Depending on your profile endpoint's response format
                 } catch (error) {
                     // If fetching profile fails, maybe token is expired.
                     // The interceptor will try to refresh it. If refresh fails, it will dispatch 'unauthorized'
@@ -40,7 +50,7 @@ export const AuthProvider = ({ children }) => {
         if (data.accessToken) {
             localStorage.setItem('accessToken', data.accessToken);
         }
-        setUser(data.user);
+        setUser(normalizeUser(data.user));
         return data;
     };
 
@@ -54,7 +64,7 @@ export const AuthProvider = ({ children }) => {
         if (data.accessToken) {
             localStorage.setItem('accessToken', data.accessToken);
         }
-        setUser(data.user);
+        setUser(normalizeUser(data.user));
         return data;
     };
 
@@ -63,7 +73,7 @@ export const AuthProvider = ({ children }) => {
         if (data.accessToken) {
             localStorage.setItem('accessToken', data.accessToken);
         }
-        setUser(data.user);
+        setUser(normalizeUser(data.user));
         return data;
     };
 
@@ -79,7 +89,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const updateUser = (userData) => {
-        setUser(userData);
+        setUser(normalizeUser(userData));
     };
 
     return (
