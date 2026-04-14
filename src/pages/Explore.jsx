@@ -9,7 +9,7 @@ import { getFriendlyErrorMessage } from '../utils/errorUtils';
 import { FaMale, FaFemale, FaUserFriends } from 'react-icons/fa';
 import {
     FiSearch, FiMapPin, FiHome, FiNavigation, FiX,
-    FiHeart, FiAlertCircle, FiSliders, FiChevronDown, FiCheck, FiUsers, FiStar
+    FiHeart, FiAlertCircle, FiSliders, FiChevronDown, FiCheck, FiUsers, FiStar, FiLayout
 } from 'react-icons/fi';
 import HostelCard from '../components/common/HostelCard';
 import Pagination from '../components/common/Pagination';
