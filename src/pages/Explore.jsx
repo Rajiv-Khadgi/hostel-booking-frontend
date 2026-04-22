@@ -87,8 +87,7 @@ function DualRangeSlider({ min, max, step, valueMin, valueMax, onChangeMin, onCh
                 }}
             />
 
-            {/* Logic: Need to add styles for thumbs to have pointer-events auto. 
-                In Tailwind/React, we can inject a global style for this component or use a specialized class. */}
+            
             <style dangerouslySetInnerHTML={{
                 __html: `
                 input[type=range]::-webkit-slider-thumb { pointer-events: auto; width: 24px; height: 24px; -webkit-appearance: none; }
@@ -181,7 +180,7 @@ function SegPill({ active, onClick, children, activeClass }) {
     );
 }
 
-/* ═══════════════════════════════════════════════════════ */
+
 export default function Explore() {
     const [hostels, setHostels] = useState([]);
     const [loading, setLoading] = useState(true);

@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
             const token = localStorage.getItem('accessToken');
             if (token) {
                 try {
-                    // Try to fetch profile to verify token
+                    //fetch profile to verify token
                     const { data } = await api.get('/profile');
                     setUser(normalizeUser(data.user || data)); // Depending on your profile endpoint's response format
                 } catch (error) {

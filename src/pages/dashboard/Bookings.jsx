@@ -206,7 +206,7 @@ export default function Bookings() {
                                     onChange={e => setDateFrom(e.target.value)}
                                     className="flex-1 sm:w-28 px-2 py-1.5 rounded-lg border-0 bg-transparent text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all font-medium min-w-0"
                                 />
-                                <span className="text-xs text-gray-400 font-bold">→</span>
+                                <span className="text-xs text-gray-400 font-medium">to</span>
                                 <input
                                     type="date"
                                     value={dateTo}
