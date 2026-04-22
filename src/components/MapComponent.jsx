@@ -17,7 +17,7 @@ let DefaultIcon = L.icon({
     shadowSize: [41, 41]
 });
 
-// A different colored icon for the user location (using a standard Leaflet feature hack or custom div)
+// user icon
 const UserLocationIcon = L.divIcon({
     className: 'custom-user-location-marker',
     html: `<div style="background-color: #ef4444; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3); position: relative;"><div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background-color: #ef4444; opacity: 0.4; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div></div>`,

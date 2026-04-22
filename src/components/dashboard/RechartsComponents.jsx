@@ -57,7 +57,7 @@ export const BookingStatusChart = ({ data }) => {
 // Revenue Breakdown Pie Chart
 export const RevenueBreakdownChart = ({ data }) => {
     const transformedData = data.map((item, idx) => ({
-        name: item['room.room_type'] || `Category ${idx}`,
+        name: item.room_type || item.name || item['room.room_type'] || `Category ${idx}`,
         value: Number(item.total || 0)
     }));
 

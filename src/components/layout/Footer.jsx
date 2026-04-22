@@ -12,17 +12,6 @@ export default function Footer() {
             <p className="text-sm leading-relaxed max-w-xs transition-colors">
               Discover verified hostels and student residences across Nepal with ease. Your perfect stay is just a few clicks away.
             </p>
-            <div className="flex space-x-4 pt-2">
-              <a href="#" className="w-10 h-10 rounded-full bg-emerald-900/50 flex items-center justify-center text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
-                <FiFacebook size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-emerald-900/50 flex items-center justify-center text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
-                <FiTwitter size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-emerald-900/50 flex items-center justify-center text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm">
-                <FiInstagram size={18} />
-              </a>
-            </div>
           </div>
 
           {/* Quick Links */}
@@ -33,33 +22,19 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li><Link to="/" className="hover:text-emerald-400 transition-colors inline-block relative group">Home<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></Link></li>
-              <li><Link to="/explore" className="hover:text-emerald-400 transition-colors inline-block relative group">Explore<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></Link></li>
-              <li><a href="#" className="hover:text-emerald-400 transition-colors inline-block relative group">About Us<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></a></li>
-              <li><a href="#" className="hover:text-emerald-400 transition-colors inline-block relative group">Contact<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></a></li>
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div>
-            <h4 className="text-white font-semibold mb-6 flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-              Support
-            </h4>
-            <ul className="space-y-3">
-              <li><a href="#" className="hover:text-emerald-400 transition-colors inline-block relative group">Help Center<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></a></li>
-              <li><a href="#" className="hover:text-emerald-400 transition-colors inline-block relative group">Safety Information<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></a></li>
-              <li><a href="#" className="hover:text-emerald-400 transition-colors inline-block relative group">Cancellation Options<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></a></li>
-              <li><a href="#" className="hover:text-emerald-400 transition-colors inline-block relative group">Terms of Service<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></a></li>
+              <li><Link to="/explore" className="hover:text-emerald-400 transition-colors inline-block relative group">Explore Hostels<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></Link></li>
+              <li><Link to="/about" className="hover:text-emerald-400 transition-colors inline-block relative group">About Us<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></Link></li>
+              <li><Link to="/contact" className="hover:text-emerald-400 transition-colors inline-block relative group">Contact<span className="absolute -bottom-0.5 left-0 w-0 h-px bg-emerald-400 transition-all group-hover:w-full"></span></Link></li>
             </ul>
           </div>
 
           {/* Contact */}
-          <div>
+          <div className="lg:col-span-2">
             <h4 className="text-white font-semibold mb-6 flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
               Contact Us
             </h4>
-            <ul className="space-y-4">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <li className="flex items-start gap-3">
                 <FiMapPin className="text-emerald-500 mt-1 shrink-0" size={18} />
                 <span className="text-sm">Kathmandu, Bagmati<br />Nepal, 44600</span>
@@ -82,11 +57,7 @@ export default function Footer() {
             © {new Date().getFullYear()} HomeSpace. All rights reserved.
           </p>
           <div className="flex gap-4 text-sm">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <span className="text-emerald-800/60">•</span>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
-            <span className="text-emerald-800/60">•</span>
-            <a href="#" className="hover:text-white transition-colors">Sitemap</a>
+            <span className="text-emerald-100/50">Verified Hostel Booking Platform</span>
           </div>
         </div>
       </div>
