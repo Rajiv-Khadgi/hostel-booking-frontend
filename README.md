@@ -1,16 +1,25 @@
-# React + Vite
+# HomeSpace - Frontend Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Project Description
+HomeSpace is a premium, user-centric web application designed to simplify the hostel search and booking experience. Built with a focus on high-performance and rich aesthetics, the platform provides an intuitive interface for students to discover verified accommodations and for property owners to manage their businesses with professional analytical tools.
 
-Currently, two official plugins are available:
+## Stack Used
+*   **Library**: React.js (Vite)
+*   **Styling**: Tailwind CSS
+*   **State Management**: React Context API
+*   **Routing**: React Router DOM
+*   **Charts & Data Viz**: Recharts & Chart.js
+*   **Animations**: Framer Motion
+*   **API Client**: Axios
+*   **Icons**: React Icons (Feather, FontAwesome)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Key Features
+*   **Interactive Exploration**: Advanced filtering and search for hostels based on location, budget, and amenities.
+*   **Dynamic Dashboards**: 
+    *   **Student**: Track bookings, saved hostels, and spending behavior.
+    *   **Owner**: Manage properties, rooms, and view detailed revenue analytics.
+    *   **Admin**: System-wide oversight of users, hostels, and reviews.
+*   **Real-time Messaging**: Fully integrated chat interface for instant communication.
+*   **Secure Booking Flow**: Streamlined reservation process with integrated Khalti payment callback handling.
+*   **Responsive Design**: A premium, "mobile-first" experience that works across all devices.
+*   **Review & Rating System**: Transparent feedback loop for the student community.
